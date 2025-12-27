@@ -9,14 +9,16 @@ E-commerce (tema fixo) construído em **Laravel 11** para venda de **produtos f�
 ## Domínios
 
 ### Produção
-- Loja: https://nobugs.com.br  
-- Admin: https://admin.nobugs.com.br  
-- (Opcional) API: https://api.nobugs.com.br  
+
+- Loja: `https://nobugs.com.br`
+- Admin: `https://admin.nobugs.com.br`
+- (Opcional) API: `https://api.nobugs.com.br`
 
 ### Desenvolvimento
-- Loja: https://localhost  
-- Admin: https://admin.localhost  
-- (Opcional) API: https://api.localhost  
+
+- Loja: `https://localhost`
+- Admin: `https://admin.localhost`
+- (Opcional) API: `https://api.localhost`
 
 **Importante:** Loja e Admin usam **sessões separadas** (logins não são compartilhados entre subdomínios).
 
@@ -25,6 +27,7 @@ E-commerce (tema fixo) construído em **Laravel 11** para venda de **produtos f�
 ## Principais features (MVP)
 
 ### Loja (web)
+
 - Catálogo com **pt-BR / en-US**
 - Produtos **físicos** e **digitais**
 - **Variações** (ex.: licença/tamanho/cor) + snapshots no pedido
@@ -43,6 +46,7 @@ E-commerce (tema fixo) construído em **Laravel 11** para venda de **produtos f�
 - “Minha Conta”: pedidos, downloads, preferências (idioma/moeda)
 
 ### Admin (web)
+
 - Dashboard + CRUD:
   - produtos, categorias, variações, imagens
   - pedidos + pagamentos
@@ -53,11 +57,13 @@ E-commerce (tema fixo) construído em **Laravel 11** para venda de **produtos f�
 - RBAC (roles/permissões) com **níveis/hierarquia** e “invisibilidade”
 
 ### Integrações (MVP)
+
 - **Correios (API direta)**: cotação de frete e seleção de serviço
 - **PagSeguro**: criação de cobrança + webhooks
 - **Discord gating**: exigir guild/role por produto/categoria para comprar e/ou baixar
 
 ### Conformidade (LGPD)
+
 - Consentimento de cookies
 - Exportação de dados
 - Exclusão/anonimização de conta (política definida na implementação)
@@ -116,29 +122,34 @@ E-commerce (tema fixo) construído em **Laravel 11** para venda de **produtos f�
 
 > Ajuste conforme o ambiente do time. Este é um baseline.
 
-1) Instale dependências:
+1;) Instale dependências:
+
 ```bash
 composer install
 npm install
 ```
 
-2) Crie o `.env`:
+2;) Crie o `.env`:
+
 ```bash
 cp .env.example .env
 php artisan key:generate
 ```
 
-3) Configure banco (MySQL) no `.env` e rode migrations:
+3;) Configure banco (MySQL) no `.env` e rode migrations:
+
 ```bash
 php artisan migrate
 ```
 
-4) Build de assets:
+4;) Build de assets:
+
 ```bash
 npm run dev
 ```
 
-5) Suba o servidor:
+5;) Suba o servidor:
+
 ```bash
 php artisan serve
 ```
@@ -147,13 +158,15 @@ php artisan serve
 
 ## Cron/Queue (Hostinger Shared)
 
-**Schedule**
+Schedule
+
 ```bash
 * * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1
 ```
 
 **Queue (database)**
 Se não houver daemon, use:
+
 ```bash
 * * * * * php /path/to/artisan queue:work --stop-when-empty >> /dev/null 2>&1
 ```
@@ -163,6 +176,7 @@ Se não houver daemon, use:
 ## Ambiente / Configuração (checklist)
 
 No `.env` (produção):
+
 - `APP_ENV=production`
 - `APP_DEBUG=false`
 - SMTP Hostinger (`MAIL_*`)
@@ -188,11 +202,13 @@ No `.env` (produção):
 ---
 
 ## Documentação
+
 - Veja `PROJECT_BLUEPRINT.md` (escopo, decisões, modelo de dados, integrações e backlog macro).
 
 ---
 
 ## Licença
+
 A definir.
 
 Copilot is powered by AI, so mistakes are possible. Leave a comment via the 👍 👎 to share your feedback and help improve the experience.
