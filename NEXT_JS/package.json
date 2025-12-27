@@ -1,0 +1,42 @@
+{
+  "name": "nb-store-next",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "test": "tsx --test \"__tests__/**/*.test.ts\"",
+    "test:e2e": "playwright test",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "prisma:generate": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "bootstrap": "^5.3.3",
+    "bootstrap-icons": "^1.13.1",
+    "bootstrap-sass-modules": "^3.1.0",
+    "clsx": "^2.1.1",
+    "ioredis": "^5.4.1",
+    "next": "^16.1.0",
+    "next-auth": "^4.24.5",
+    "nodemailer": "^7.0.12",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@prisma/client": "^5.22.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.10.0",
+    "@types/react": "19.2.7",
+    "eslint": "^9.13.0",
+    "eslint-config-next": "^16.1.0",
+    "prisma": "^5.22.0",
+    "sass": "^1.77.8",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  },
+  "prisma": {
+    "seed": "npm run db:seed"
+  }
+}

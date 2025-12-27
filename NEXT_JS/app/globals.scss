@@ -1,0 +1,18 @@
+@use "../styles/bootstrap-sass-modules/bootstrap";
+
+:root {
+  --nb-primary: #0d6efd;
+  --nb-bg: #f8f9fa;
+  --bs-primary: var(--nb-primary);
+  --bs-body-bg: var(--nb-bg);
+  --bs-link-color: var(--nb-primary);
+}
+
+body {
+  background: var(--nb-bg);
+  color: #212529;
+}
+
+a {
+  color: var(--nb-primary);
+}

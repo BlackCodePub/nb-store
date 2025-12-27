@@ -1,0 +1,22 @@
+@use "sass:string";
+@use "../functions";
+@use "../variables";
+
+// See https://codepen.io/kevinweber/pen/dXWoRw
+//
+// Requires the use of quotes around data URIs.
+
+@function escape-svg($string) {
+  @if string.index($string, "data:image/svg+xml") {
+    @each $char, $encoded in variables.$escaped-characters {
+      // Do not escape the url brackets
+      @if string.index($string, "url(") == 1 {
+        $string: url("#{functions.str-replace(string.slice($string, 6, -3), $char, $encoded)}");
+      } @else {
+        $string: functions.str-replace($string, $char, $encoded);
+      }
+    }
+  }
+
+  @return $string;
+}

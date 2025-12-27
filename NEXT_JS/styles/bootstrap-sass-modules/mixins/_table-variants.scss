@@ -1,0 +1,73 @@
+@use "sass:color";
+@use "sass:math";
+@use "../functions";
+@use "../variables";
+
+// scss-docs-start table-variant
+@mixin table-variant($state, $background) {
+  .table-#{$state} {
+    $color: functions.color-contrast(
+      functions.opaque(variables.$body-bg, $background),
+      variables.$color-contrast-dark,
+      variables.$color-contrast-light,
+      variables.$min-contrast-ratio,
+      variables.$white,
+      variables.$black
+    );
+    $hover-bg: color.mix(
+      $color,
+      $background,
+      math.percentage(variables.$table-hover-bg-factor)
+    );
+    $striped-bg: color.mix(
+      $color,
+      $background,
+      math.percentage(variables.$table-striped-bg-factor)
+    );
+    $active-bg: color.mix(
+      $color,
+      $background,
+      math.percentage(variables.$table-active-bg-factor)
+    );
+    $table-border-color: color.mix(
+      $color,
+      $background,
+      math.percentage(variables.$table-border-factor)
+    );
+
+    --#{variables.$prefix}table-color: #{$color};
+    --#{variables.$prefix}table-bg: #{$background};
+    --#{variables.$prefix}table-border-color: #{variables.$table-border-color};
+    --#{variables.$prefix}table-striped-bg: #{$striped-bg};
+    --#{variables.$prefix}table-striped-color: #{functions.color-contrast(
+      $striped-bg,
+      variables.$color-contrast-dark,
+      variables.$color-contrast-light,
+      variables.$min-contrast-ratio,
+      variables.$white,
+      variables.$black
+    )};
+    --#{variables.$prefix}table-active-bg: #{$active-bg};
+    --#{variables.$prefix}table-active-color: #{functions.color-contrast(
+      $active-bg,
+      variables.$color-contrast-dark,
+      variables.$color-contrast-light,
+      variables.$min-contrast-ratio,
+      variables.$white,
+      variables.$black
+    )};
+    --#{variables.$prefix}table-hover-bg: #{$hover-bg};
+    --#{variables.$prefix}table-hover-color: #{functions.color-contrast(
+      $hover-bg,
+      variables.$color-contrast-dark,
+      variables.$color-contrast-light,
+      variables.$min-contrast-ratio,
+      variables.$white,
+      variables.$black
+    )};
+
+    color: var(--#{variables.$prefix}table-color);
+    border-color: var(--#{variables.$prefix}table-border-color);
+  }
+}
+// scss-docs-end table-variant
