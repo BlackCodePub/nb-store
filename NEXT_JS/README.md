@@ -9,14 +9,16 @@ E-commerce (tema fixo) construído em **Next.js 14 (App Router) + TypeScript** p
 ## Domínios sugeridos
 
 ### Produção
-- Loja: https://nobugs.com.br
-- Admin: https://admin.nobugs.com.br
-- API (route handlers): https://api.nobugs.com.br (opcional, pode compartilhar domínio com App Router)
+
+- Loja: `https://nobugs.com.br`
+- Admin: `https://admin.nobugs.com.br`
+- API (route handlers): `https://api.nobugs.com.br` (opcional, pode compartilhar domínio com App Router)
 
 ### Desenvolvimento
-- Loja: https://localhost:3000
-- Admin: https://admin.localhost:3000 (via host mapping)
-- API: https://api.localhost:3000 (opcional)
+
+- Loja: `https://localhost:3000`
+- Admin: `https://admin.localhost:3000` (via host mapping)
+- API: `https://api.localhost:3000` (opcional)
 
 **Importante:** Loja e Admin usam **sessões separadas** (cookies isolados por host) via NextAuth e cookies distintos.
 
@@ -25,6 +27,7 @@ E-commerce (tema fixo) construído em **Next.js 14 (App Router) + TypeScript** p
 ## Principais features (MVP)
 
 ### Loja (web)
+
 - Catálogo com **pt-BR / en-US**
 - Produtos **físicos** e **digitais**
 - **Variações** (ex.: licença/tamanho/cor) + snapshots no pedido
@@ -43,6 +46,7 @@ E-commerce (tema fixo) construído em **Next.js 14 (App Router) + TypeScript** p
 - “Minha Conta”: pedidos, downloads, preferências (idioma/moeda)
 
 ### Admin (web)
+
 - Dashboard + CRUD:
   - produtos, categorias, variações, imagens
   - pedidos + pagamentos
@@ -53,11 +57,13 @@ E-commerce (tema fixo) construído em **Next.js 14 (App Router) + TypeScript** p
 - RBAC (roles/permissões) com **níveis/hierarquia** e “invisibilidade”
 
 ### Integrações (MVP)
+
 - **Correios (API direta)**: cotação de frete e seleção de serviço
 - **PagSeguro**: criação de cobrança + webhooks (route handlers)
 - **Discord gating**: exigir guild/role por produto/categoria para comprar e/ou baixar
 
 ### Conformidade (LGPD)
+
 - Consentimento de cookies
 - Exportação de dados
 - Exclusão/anonimização de conta (processo assíncrono)
@@ -106,27 +112,33 @@ E-commerce (tema fixo) construído em **Next.js 14 (App Router) + TypeScript** p
 > Ajuste conforme o ambiente do time. Este é um baseline Next.js.
 
 1) Instale dependências:
+
 ```bash
 pnpm install
 ```
 
-2) Configure env:
+2;) Configure env:
+
 ```bash
 cp .env.example .env.local
 ```
+
 Preencha credenciais (DB, PagSeguro, Discord, storage, Auth secret).
 
-3) Gere banco e migre:
+3;) Gere banco e migre:
+
 ```bash
 pnpm prisma migrate dev
 ```
 
-4) Rode o app:
+4;) Rode o app:
+
 ```bash
 pnpm dev
 ```
 
-5) Build de produção (para testes):
+5;) Build de produção (para testes):
+
 ```bash
 pnpm build && pnpm start
 ```
@@ -144,6 +156,7 @@ pnpm build && pnpm start
 ## Ambiente / Configuração (checklist)
 
 No `.env.local` (prod):
+
 - `DATABASE_URL` (MySQL/Postgres)
 - `NEXTAUTH_SECRET`, `NEXTAUTH_URL`
 - Credenciais PagSeguro + webhook secret
@@ -155,9 +168,11 @@ No `.env.local` (prod):
 ---
 
 ## Documentação
+
 - Veja `docs/PROJECT_BLUEPRINT.md` (escopo, decisões, modelo de dados, integrações e backlog macro).
 
 ---
 
 ## Licença
+
 A definir.

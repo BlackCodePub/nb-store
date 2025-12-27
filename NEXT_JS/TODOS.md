@@ -10,6 +10,7 @@ Este documento lista todas as tarefas pendentes para completar o MVP, baseado na
 ## 🟢 Concluídos
 
 ### Infraestrutura
+
 - [x] Setup Next.js 16.1 com Turbopack
 - [x] Prisma configurado com MySQL (Hostinger)
 - [x] NextAuth com Credentials + Discord + Email providers
@@ -25,6 +26,7 @@ Este documento lista todas as tarefas pendentes para completar o MVP, baseado na
 ## 🔴 Prioridade Alta (Sprint 1-3)
 
 ### 1. Loja: Páginas Públicas
+
 - [ ] **Home Page** - Listagem de produtos em destaque, categorias
 - [ ] **Categoria** - Página /category/[slug] com filtro por categoria
 - [ ] **PDP (Product Detail Page)** - Página /product/[slug] com:
@@ -34,12 +36,14 @@ Este documento lista todas as tarefas pendentes para completar o MVP, baseado na
   - Botão "Adicionar ao Carrinho"
 
 ### 2. Carrinho
+
 - [ ] **Schema Prisma** - Tabelas Cart e CartItem
 - [ ] **API** - CRUD de carrinho (/api/cart)
 - [ ] **Componente** - Drawer/modal de carrinho
 - [ ] **Persistência** - Carrinho por usuário logado (sem guest checkout)
 
 ### 3. Checkout Multi-etapas
+
 - [ ] **Step 1: Endereço**
   - Formulário completo (CEP, rua, número, complemento, bairro, cidade, estado)
   - Validação e autocompletar via ViaCEP
@@ -64,6 +68,7 @@ Este documento lista todas as tarefas pendentes para completar o MVP, baseado na
 ## 🟡 Prioridade Média (Sprint 4-5)
 
 ### 4. Cupons de Desconto
+
 - [ ] **Schema Prisma** - Tabelas Coupon, CouponProduct, CouponCategory, CouponRedemption
 - [ ] **Regras de negócio**:
   - Tipos: percent / fixed
@@ -76,6 +81,7 @@ Este documento lista todas as tarefas pendentes para completar o MVP, baseado na
 - [ ] **UI** - Campo de cupom no checkout
 
 ### 5. Webhooks PagSeguro (Idempotência)
+
 - [ ] **Endpoint** - /api/webhooks/pagseguro
 - [ ] **Idempotência** - Não duplicar efeitos ao reprocessar
 - [ ] **Transições**:
@@ -85,6 +91,7 @@ Este documento lista todas as tarefas pendentes para completar o MVP, baseado na
 - [ ] **Rate limiting** - Throttle no endpoint
 
 ### 6. Emails Transacionais
+
 - [ ] **Confirmação de pedido pago**
 - [ ] **Notificação de cancelamento/falha**
 - [ ] **Queue database** - Envio assíncrono via job
@@ -94,18 +101,21 @@ Este documento lista todas as tarefas pendentes para completar o MVP, baseado na
 ## 🟠 Prioridade Normal (Sprint 6-7)
 
 ### 7. Multi-idioma (i18n)
+
 - [ ] **Middleware SetLocale** - Auto-detect + seletor + persistência
 - [ ] **Schema Prisma** - Tabelas *_translations (CategoryTranslation, ProductTranslation)
 - [ ] **Seletor de idioma** - pt-BR / en-US na loja
 - [ ] **Traduções estáticas** - Arquivos de tradução para UI
 
 ### 8. Multi-moeda (FX)
+
 - [ ] **Schema Prisma** - Tabela exchange_rates
 - [ ] **Job diário** - FetchExchangeRateJob (API de câmbio)
 - [ ] **Serviço** - Conversão BRL→USD para exibição
 - [ ] **Pedido** - Salvar fx_rate_used ao criar
 
 ### 9. Entrega Digital
+
 - [ ] **Entitlements** - Gerar ao marcar paid
 - [ ] **Downloads seguros**:
   - URLs assinadas (signed routes) ✅
@@ -115,6 +125,7 @@ Este documento lista todas as tarefas pendentes para completar o MVP, baseado na
 - [ ] **Página Meus Downloads** - Área do cliente
 
 ### 10. Discord Gating
+
 - [ ] **OAuth Discord** - Conectar conta Discord
 - [ ] **Schema** - DiscordRule por produto/categoria
 - [ ] **Checagem no checkout** - Bloquear se não atende guild+role
@@ -125,6 +136,7 @@ Este documento lista todas as tarefas pendentes para completar o MVP, baseado na
 ## 🔵 Prioridade Baixa (Sprint 8)
 
 ### 11. Blog + Comentários
+
 - [ ] **Schema** - Post, PostTranslation, Comment
 - [ ] **Admin** - CRUD de posts com traduções pt/en
 - [ ] **Loja** - Listagem e página do post
@@ -133,6 +145,7 @@ Este documento lista todas as tarefas pendentes para completar o MVP, baseado na
   - Moderação no admin (pending/approved/rejected)
 
 ### 12. LGPD
+
 - [ ] **Consentimento cookies** - Banner + registro de aceite
 - [ ] **Exportação de dados** - Job para gerar JSON/CSV
 - [ ] **Exclusão de conta**:
@@ -140,6 +153,7 @@ Este documento lista todas as tarefas pendentes para completar o MVP, baseado na
   - Anonimização (preservar integridade de pedidos)
 
 ### 13. Área Minha Conta
+
 - [ ] **Meus Pedidos** - Listagem com status e detalhes
 - [ ] **Meus Downloads** - Digitais comprados
 - [ ] **Conectar Discord** - OAuth flow
@@ -150,16 +164,19 @@ Este documento lista todas as tarefas pendentes para completar o MVP, baseado na
 ## 🔧 Melhorias Técnicas
 
 ### Configuração
+
 - [ ] **next.config.mjs** - Adicionar allowedDevOrigins para warnings cross-origin
 - [ ] **Sass** - Atualizar bootstrap-sass-modules para resolver deprecações
 - [ ] **Rate limiting global** - Implementar em rotas sensíveis
 
 ### Admin
+
 - [ ] **RBAC níveis** - Implementar "invisibilidade" (só ver users de level <= meu_level)
 - [ ] **Logs de auditoria** - Registrar ações sensíveis
 - [ ] **Dashboard** - Métricas básicas (pedidos, receita, estoque baixo)
 
 ### Segurança
+
 - [ ] **Throttle** - Login, webhooks, downloads
 - [ ] **Validação** - FormRequest em todas as APIs
 - [ ] **Sanitização** - Não logar secrets
@@ -184,6 +201,7 @@ Este documento lista todas as tarefas pendentes para completar o MVP, baseado na
 
 | Épico | Progresso |
 |-------|-----------|
+
 | Base & UI | 80% |
 | Admin & Catálogo | 90% |
 | Carrinho & Checkout | 10% |

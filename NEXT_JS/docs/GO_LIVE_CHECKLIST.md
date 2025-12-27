@@ -18,20 +18,24 @@ Ambiente: **Produção (Vercel)**
 ## 2. Variáveis de Ambiente (Vercel)
 
 ### Banco de Dados
+
 - [ ] `DATABASE_URL` - Conexão MySQL produção
 - [ ] Certificado SSL do banco (se aplicável)
 
 ### NextAuth
+
 - [ ] `NEXTAUTH_URL` - URL pública da loja
 - [ ] `NEXTAUTH_SECRET` - Secret forte (32+ chars)
 
 ### PagSeguro
-- [ ] `PAGSEGURO_API_URL` - https://api.pagseguro.com
+
+- [ ] `PAGSEGURO_API_URL` - `https://api.pagseguro.com`
 - [ ] `PAGSEGURO_TOKEN` - Token de produção
 - [ ] `PAGSEGURO_EMAIL` - Email da conta
 - [ ] `PAGSEGURO_WEBHOOK_SECRET` - Secret do webhook
 
 ### Storage
+
 - [ ] `STORAGE_BUCKET` - Bucket S3/R2 para uploads
 - [ ] `STORAGE_REGION` - Região do bucket
 - [ ] `STORAGE_ACCESS_KEY` - Access key
@@ -39,11 +43,13 @@ Ambiente: **Produção (Vercel)**
 - [ ] `STORAGE_PUBLIC_URL` - URL pública do CDN
 
 ### Discord (Gating)
+
 - [ ] `DISCORD_CLIENT_ID` - OAuth app ID
 - [ ] `DISCORD_CLIENT_SECRET` - OAuth secret
 - [ ] `DISCORD_BOT_TOKEN` - Token do bot (para verificar roles)
 
 ### Email
+
 - [ ] `SMTP_HOST` - Servidor SMTP
 - [ ] `SMTP_PORT` - Porta (587 para TLS)
 - [ ] `SMTP_USER` - Usuário
@@ -51,6 +57,7 @@ Ambiente: **Produção (Vercel)**
 - [ ] `EMAIL_FROM` - Email de envio
 
 ### Outros
+
 - [ ] `STORE_ZIP_CODE` - CEP de origem para frete
 - [ ] `CRON_SECRET` - Secret para autenticar cron jobs
 - [ ] `NODE_ENV=production`
@@ -90,12 +97,14 @@ Configurar em `vercel.json`:
 
 ## 5. Webhooks
 
-### PagSeguro
+### PagSeguro Webhook
+
 - [ ] URL: `https://loja.exemplo.com/api/webhooks/pagseguro`
 - [ ] Eventos: `CHARGE.PAID`, `CHARGE.CANCELED`
 - [ ] Secret configurado no PagSeguro e no env
 
 ### Testar
+
 - [ ] Criar cobrança de teste
 - [ ] Verificar webhook recebido
 - [ ] Verificar status atualizado
@@ -149,6 +158,7 @@ Configurar em `vercel.json`:
 ## 10. Teste Ponta-a-Ponta
 
 ### Produto Físico
+
 - [ ] Navegar catálogo
 - [ ] Adicionar ao carrinho
 - [ ] Aplicar cupom
@@ -161,6 +171,7 @@ Configurar em `vercel.json`:
 - [ ] Admin: ver pedido, marcar enviado
 
 ### Produto Digital
+
 - [ ] Comprar produto digital
 - [ ] Pagamento aprovado
 - [ ] Entitlement criado
@@ -169,12 +180,14 @@ Configurar em `vercel.json`:
 - [ ] Log de download registrado
 
 ### Auth
+
 - [ ] Cadastro com verificação de email
 - [ ] Login/logout
 - [ ] Recuperação de senha
 - [ ] Atualização de perfil
 
 ### Admin
+
 - [ ] Login admin separado
 - [ ] CRUD produtos
 - [ ] Gerenciar pedidos
@@ -182,11 +195,13 @@ Configurar em `vercel.json`:
 - [ ] RBAC funcionando
 
 ### Discord Gating (se aplicável)
+
 - [ ] Conectar conta Discord
 - [ ] Verificar gating no produto
 - [ ] Compra bloqueada sem requisitos
 
 ### LGPD
+
 - [ ] Cookie consent aparecendo
 - [ ] Exportação de dados
 - [ ] Exclusão de conta
@@ -214,6 +229,7 @@ Configurar em `vercel.json`:
 
 | Responsável | Data | Aprovação |
 |-------------|------|-----------|
+
 | | | [ ] Aprovado |
 
 ---
