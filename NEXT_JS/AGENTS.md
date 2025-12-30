@@ -14,6 +14,7 @@ Este documento define como **agentes automatizados (IA), assistentes e automaç�
 ---
 
 ## 1) Comunicação (pt-BR) e estilo
+
 - Escreva sempre em **Português Brasileiro**, claro e direto.
 - Evite gírias; use termos técnicos corretos.
 - Ao propor mudanças, inclua:
@@ -27,6 +28,7 @@ Este documento define como **agentes automatizados (IA), assistentes e automaç�
 ---
 
 ## 2) “Contratos” do MVP (não negociar sem decisão explícita)
+
 1. **Next.js 14 (App Router) + TypeScript**
 2. Loja e Admin em subdomínios com **sessões separadas** (cookies isolados)
 3. Checkout **multi-etapas**
@@ -43,18 +45,22 @@ Este documento define como **agentes automatizados (IA), assistentes e automaç�
 ---
 
 ## 3) Regra obrigatória: documentação na pasta `docs/`
+
 - Toda documentação do projeto (exceto o `README.md` na raiz) deve ficar em **`docs/`**.
 - Manter índice em `docs/README.md` apontando para todas as seções.
 
 ---
 
 ## 4) Código sempre comentado (por arquivo e por função)
+
 **Obrigatório para qualquer contribuição:**
+
 - Arquivo novo: cabeçalho curto com propósito, onde é usado (rota/component/server action) e pontos de segurança.
 - Classe/função nova: comentário explicando o que faz, entradas/saídas, efeitos colaterais (DB, queue, e-mail, storage), uso típico e guardas de segurança.
 - Comentários em **pt-BR**.
 
 ### 4.1 Padrão sugerido (TypeScript JSDoc)
+
 ```ts
 /**
  * applyCoupon
@@ -71,17 +77,21 @@ export async function applyCoupon(params: ApplyCouponInput): Promise<CartPricing
 ---
 
 ## 5) Dependências e bibliotecas (regras)
+
 ### 5.1 Versões e atualização
+
 - Preferir **última versão estável** e libs ativas.
 - Verificar compatibilidade com Next.js 14 / Node 18+ / Prisma.
 
 ### 5.2 Evitar dependências desnecessárias
+
 - Não adicionar libs que o Next/React já resolvem nativamente.
 - Avaliar impacto em bundle e Edge/Server runtimes.
 
 ---
 
 ## 6) Segurança (prioridade máxima)
+
 - Validar input com **zod** ou schema similar em server actions e route handlers.
 - Nunca confiar em dados do cliente; revalidar no servidor.
 - Não logar tokens, secrets ou PII em texto puro.
@@ -92,6 +102,7 @@ export async function applyCoupon(params: ApplyCouponInput): Promise<CartPricing
 ---
 
 ## 7) Comentários sobre operações
+
 - Deploy com `pnpm build` e runtimes serverless; evitar dependências nativas pesadas.
 - Jobs/cron via Vercel Cron (ou equivalente) para FX diário e tarefas de manutenção.
 - Background intenso: use fila (ex.: Upstash Redis + BullMQ) e documente.
@@ -99,6 +110,7 @@ export async function applyCoupon(params: ApplyCouponInput): Promise<CartPricing
 ---
 
 ## 8) Checklist obrigatório antes de “finalizar” uma entrega
+
 - [ ] Documentação em `docs/` atualizada e indexada
 - [ ] Código comentado em pt-BR
 - [ ] Validação de input (zod) em server actions/APIs
@@ -112,6 +124,7 @@ export async function applyCoupon(params: ApplyCouponInput): Promise<CartPricing
 ---
 
 ## 9) Referências internas do repo
+
 - `README.md` — visão geral e setup
 - `ARCHITECTURE.md` — decisões arquiteturais
 - `CONFIGURATION.md` — variáveis `.env`, cron, integrações
