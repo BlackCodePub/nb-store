@@ -38,7 +38,9 @@
   @include rfs.font-size(var(--#{variables.$prefix}nav-link-font-size));
   font-weight: var(--#{variables.$prefix}nav-link-font-weight);
   color: var(--#{variables.$prefix}nav-link-color);
-  text-decoration: if(variables.$link-decoration == none, null, none);
+  @if variables.$link-decoration != none {
+    text-decoration: none;
+  }
   background: none;
   border: 0;
   @include transition.transition(variables.$nav-link-transition);
@@ -46,12 +48,9 @@
   &:hover,
   &:focus {
     color: var(--#{variables.$prefix}nav-link-hover-color);
-    text-decoration:
-      if(
-        variables.$link-hover-decoration == underline,
-        none,
-        null
-      );
+    @if variables.$link-hover-decoration == underline {
+      text-decoration: none;
+    }
   }
 
   &:focus-visible {

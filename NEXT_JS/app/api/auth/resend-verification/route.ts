@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 import { rateLimitByRequest } from '../../../../src/server/utils/rate-limit';
 import { prisma } from '../../../../src/server/db/client';
-import { sendEmail, generateEmailVerificationEmail } from '../../../../src/server/utils/email';
+import { sendEmail, buildEmailFromTemplate } from '../../../../src/server/utils/email';
 
 export async function POST(req: Request) {
   const limit = await rateLimitByRequest(req, { prefix: 'auth:resend:', limit: 3, windowMs: 60_000 });
@@ -51,10 +51,13 @@ export async function POST(req: Request) {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const verifyUrl = `${baseUrl}/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
 
-    const { html, text } = generateEmailVerificationEmail(verifyUrl, user.name || undefined);
+    const { html, text, subject } = await buildEmailFromTemplate('auth.verify_email', {
+      userName: user.name ? ` ${user.name}` : '',
+      verifyUrl,
+    });
     await sendEmail({
       to: email,
-      subject: 'Confirme seu e-mail - nb-store',
+      subject,
       html,
       text,
     });

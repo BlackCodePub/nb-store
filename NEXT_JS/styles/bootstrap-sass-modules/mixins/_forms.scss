@@ -10,13 +10,17 @@
 
 // scss-docs-start form-validation-mixins
 @mixin form-validation-state-selector($state) {
+  $parent: "";
+  @if & {
+    $parent: "&";
+  }
   @if ($state == "valid" or $state == "invalid") {
-    .was-validated #{if(&, "&", "")}:#{$state},
-    #{if(&, "&", "")}.is-#{$state} {
+    .was-validated #{$parent}:#{$state},
+    #{$parent}.is-#{$state} {
       @content;
     }
   } @else {
-    #{if(&, "&", "")}.is-#{$state} {
+    #{$parent}.is-#{$state} {
       @content;
     }
   }

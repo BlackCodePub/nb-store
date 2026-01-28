@@ -27,13 +27,21 @@ export async function GET() {
     const downloads = entitlements.map((entitlement) => {
       const isExpired = entitlement.expiresAt && entitlement.expiresAt.getTime() < Date.now();
       
-      // Extrair nome do arquivo do path
-      const fileName = entitlement.asset.path.split('/').pop() || entitlement.asset.path;
+      const fileName = entitlement.asset.name
+        || entitlement.asset.path?.split('/').pop()
+        || entitlement.asset.url
+        || 'Arquivo digital';
       
+      const maxDownloads = entitlement.asset.maxDownloads || null;
+      const remainingDownloads = maxDownloads ? Math.max(0, maxDownloads - entitlement.downloadsCount) : null;
+
       return {
         id: entitlement.id,
         fileName,
         path: entitlement.asset.path,
+        type: entitlement.asset.type,
+        maxDownloads,
+        remainingDownloads,
         createdAt: entitlement.createdAt.toISOString(),
         expiresAt: entitlement.expiresAt?.toISOString() || null,
         isExpired,

@@ -10,11 +10,11 @@ function formatPrice(price: number): string {
 }
 
 interface PageProps {
-  searchParams: Promise<{ page?: string; category?: string; q?: string }>;
+  searchParams: Promise<{ page?: string; category?: string; q?: string; type?: string }>;
 }
 
 export default async function ProductsPage({ searchParams }: PageProps) {
-  const { page, category, q } = await searchParams;
+  const { page, category, q, type } = await searchParams;
   const currentPage = Math.max(1, parseInt(page || '1', 10));
   const perPage = 12;
 
@@ -22,8 +22,20 @@ export default async function ProductsPage({ searchParams }: PageProps) {
   const where: any = { active: true };
   
   if (category) {
-    const cat = await prisma.category.findUnique({ where: { slug: category } });
-    if (cat) where.categoryId = cat.id;
+    const cat = await prisma.category.findUnique({
+      where: { slug: category },
+      include: { children: { select: { id: true } } },
+    });
+    if (cat) {
+      const childIds = cat.children.map((child) => child.id);
+      where.categoryId = { in: [cat.id, ...childIds] };
+    }
+  }
+
+  const productFilter: any = { active: true };
+  if (type === 'digital' || type === 'physical') {
+    where.type = type;
+    productFilter.type = type;
   }
 
   if (q) {
@@ -33,8 +45,15 @@ export default async function ProductsPage({ searchParams }: PageProps) {
     ];
   }
 
-  // Buscar categorias para filtro
+  // Buscar categorias para filtro (apenas com produtos cadastrados)
   const categories = await prisma.category.findMany({
+    where: {
+      parentId: null,
+      OR: [
+        { products: { some: productFilter } },
+        { children: { some: { products: { some: productFilter } } } },
+      ],
+    },
     orderBy: { name: 'asc' },
   });
 
@@ -66,7 +85,16 @@ export default async function ProductsPage({ searchParams }: PageProps) {
     params.set('page', String(pageNum));
     if (category) params.set('category', category);
     if (q) params.set('q', q);
+    if (type) params.set('type', type);
     return `/products?${params.toString()}`;
+  };
+
+  const buildFilterUrl = (nextCategory?: string | null) => {
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (type) params.set('type', type);
+    if (nextCategory) params.set('category', nextCategory);
+    return params.toString() ? `/products?${params.toString()}` : '/products';
   };
 
   return (
@@ -80,7 +108,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
               <ul className="list-unstyled mb-0">
                 <li className="mb-2">
                   <Link
-                    href="/products"
+                    href={buildFilterUrl(null)}
                     className={`text-decoration-none ${!category ? 'fw-bold text-primary' : 'text-dark'}`}
                   >
                     Todas
@@ -89,7 +117,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
                 {categories.map((cat) => (
                   <li key={cat.id} className="mb-2">
                     <Link
-                      href={`/products?category=${cat.slug}`}
+                      href={buildFilterUrl(cat.slug)}
                       className={`text-decoration-none ${category === cat.slug ? 'fw-bold text-primary' : 'text-dark'}`}
                     >
                       {cat.name}
@@ -106,6 +134,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
               <h5 className="h6 mb-3">Buscar</h5>
               <form action="/products" method="get">
                 {category && <input type="hidden" name="category" value={category} />}
+                {type && <input type="hidden" name="type" value={type} />}
                 <div className="input-group">
                   <input
                     type="text"
@@ -136,6 +165,28 @@ export default async function ProductsPage({ searchParams }: PageProps) {
               </small>
             </div>
           </div>
+
+          {categories.length > 0 && (
+            <div className="mb-4">
+              <div className="d-flex flex-wrap gap-2">
+                <Link
+                  href={buildFilterUrl(null)}
+                  className={`btn btn-sm ${!category ? 'btn-primary' : 'btn-outline-primary'}`}
+                >
+                  Todas
+                </Link>
+                {categories.map((cat) => (
+                  <Link
+                    key={cat.id}
+                    href={buildFilterUrl(cat.slug)}
+                    className={`btn btn-sm ${category === cat.slug ? 'btn-primary' : 'btn-outline-primary'}`}
+                  >
+                    {cat.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           {products.length === 0 ? (
             <div className="alert alert-info">

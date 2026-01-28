@@ -202,10 +202,9 @@ $utilities-links-underline: functions.map-loop(
   variables.$prefix
 ) !default;
 
-$negative-spacers: if(
-  variables.$enable-negative-margins,
-  functions.negativify-map(variables.$spacers),
-  null
-) !default;
+$negative-spacers: null !default;
+@if variables.$enable-negative-margins {
+  $negative-spacers: functions.negativify-map(variables.$spacers) !default;
+}
 
 $gutters: variables.$spacers !default;

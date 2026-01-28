@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { buildAuthOptions } from '../../../../src/server/auth/options';
-import { userIsAdmin } from '../../../../src/server/auth/rbac';
+import { userHasPermission, userIsAdmin } from '../../../../src/server/auth/rbac';
 import { prisma } from '../../../../src/server/db/client';
 
 // GET - Listar todos os banners
@@ -24,13 +24,14 @@ export async function GET() {
 // POST - Criar novo banner
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(buildAuthOptions('admin'));
+    const session = await getServerSession(buildAuthOptions('store'));
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
     }
     
     const isAdmin = await userIsAdmin(session.user.id);
-    if (!isAdmin) {
+    const hasAdminPermission = await userHasPermission(session.user.id, 'admin:full');
+    if (!isAdmin && !hasAdminPermission) {
       return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 });
     }
 

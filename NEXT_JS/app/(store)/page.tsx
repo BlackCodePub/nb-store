@@ -2,28 +2,36 @@ import Link from 'next/link';
 import { prisma } from '../../src/server/db/client';
 import BannerSlider from '../../src/components/store/BannerSlider';
 import NewsletterForm from '../../src/components/store/NewsletterForm';
+import { defaultLocale } from '../../src/i18n/config';
+import { getServerLocale } from '../../src/i18n/server';
 
 // Type assertion para contornar cache de tipos do TypeScript
 const db = prisma as any;
 
 // Formatar preço em BRL
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat('pt-BR', {
+function formatPrice(price: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'BRL',
   }).format(price);
 }
 
 // Formatar data para exibição
-function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('pt-BR', {
+function formatDate(date: Date, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
   }).format(date);
 }
 
+function getTranslatedName<T extends { name: string; nameEn?: string | null }>(item: T, locale: string) {
+  return locale === 'en-US' ? (item.nameEn || item.name) : item.name;
+}
+
 export default async function StoreHome() {
+  const locale = await getServerLocale();
+  const translationLocales = locale === defaultLocale ? [defaultLocale] : [locale, defaultLocale];
   // Força recompilação - timestamp: 2025-01-27-v3
   const now = new Date();
 
@@ -86,8 +94,7 @@ export default async function StoreHome() {
     take: 3,
     include: {
       translations: {
-        where: { locale: 'pt-BR' },
-        take: 1,
+        where: { locale: { in: translationLocales } },
       },
     },
   });
@@ -118,7 +125,7 @@ export default async function StoreHome() {
                       <div className="mb-2">
                         <i className="bi bi-folder2-open text-primary" style={{ fontSize: '2rem' }}></i>
                       </div>
-                      <h5 className="card-title h6 mb-1">{cat.name}</h5>
+                      <h5 className="card-title h6 mb-1">{getTranslatedName(cat, locale)}</h5>
                       <small className="text-muted">
                         {cat._count.products} {cat._count.products === 1 ? 'produto' : 'produtos'}
                       </small>
@@ -184,9 +191,9 @@ export default async function StoreHome() {
                         {product.category && (
                           <small className="text-muted d-block mb-1">{product.category.name}</small>
                         )}
-                        <h5 className="card-title h6 mb-2 text-dark">{product.name}</h5>
+                        <h5 className="card-title h6 mb-2 text-dark">{getTranslatedName(product, locale)}</h5>
                         <div className="d-flex justify-content-between align-items-center">
-                          <span className="fw-bold text-primary">{formatPrice(price)}</span>
+                          <span className="fw-bold text-primary">{formatPrice(price, locale)}</span>
                           {product.type === 'digital' && (
                             <span className="badge bg-info text-dark">Digital</span>
                           )}
@@ -247,11 +254,11 @@ export default async function StoreHome() {
                       </div>
                       <div className="card-body">
                         {product.category && (
-                          <small className="text-muted d-block mb-1">{product.category.name}</small>
+                          <small className="text-muted d-block mb-1">{getTranslatedName(product.category, locale)}</small>
                         )}
-                        <h5 className="card-title h6 mb-2 text-dark">{product.name}</h5>
+                        <h5 className="card-title h6 mb-2 text-dark">{getTranslatedName(product, locale)}</h5>
                         <div className="d-flex justify-content-between align-items-center">
-                          <span className="fw-bold text-primary">{formatPrice(price)}</span>
+                          <span className="fw-bold text-primary">{formatPrice(price, locale)}</span>
                           {product.type === 'digital' && (
                             <span className="badge bg-info text-dark">Digital</span>
                           )}
@@ -282,7 +289,9 @@ export default async function StoreHome() {
 
             <div className="row g-4">
               {blogPosts.map((post) => {
-                const translation = post.translations[0];
+                const translation = post.translations.find((t: { locale: string }) => t.locale === locale)
+                  || post.translations.find((t: { locale: string }) => t.locale === defaultLocale)
+                  || post.translations[0];
                 if (!translation) return null;
 
                 return (
@@ -294,7 +303,7 @@ export default async function StoreHome() {
                       <div className="card-body">
                         <small className="text-muted d-block mb-2">
                           <i className="bi bi-calendar me-1"></i>
-                          {formatDate(post.publishedAt || post.createdAt)}
+                          {formatDate(post.publishedAt || post.createdAt, locale)}
                         </small>
                         <h5 className="card-title h6 text-dark mb-2">
                           {translation.title}

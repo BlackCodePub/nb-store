@@ -106,12 +106,9 @@
 
 .card-link {
   &:hover {
-    text-decoration:
-      if(
-        variables.$link-hover-decoration == underline,
-        none,
-        null
-      );
+    @if variables.$link-hover-decoration == underline {
+      text-decoration: none;
+    }
   }
 
   + .card-link {

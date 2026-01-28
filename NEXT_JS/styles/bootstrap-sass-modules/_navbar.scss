@@ -17,11 +17,11 @@
 
 .navbar {
   // scss-docs-start navbar-css-vars
-  --#{variables.$prefix}navbar-padding-x: #{if(
-    variables.$navbar-padding-x == null,
-    0,
-    variables.$navbar-padding-x
-  )};
+  $navbar-padding-x: variables.$navbar-padding-x;
+  @if $navbar-padding-x == null {
+    $navbar-padding-x: 0;
+  }
+  --#{variables.$prefix}navbar-padding-x: #{$navbar-padding-x};
   --#{variables.$prefix}navbar-padding-y: #{variables.$navbar-padding-y};
   --#{variables.$prefix}navbar-color: #{variables.$navbar-light-color};
   --#{variables.$prefix}navbar-hover-color: #{variables.$navbar-light-hover-color};
@@ -87,18 +87,17 @@
   margin-right: var(--#{variables.$prefix}navbar-brand-margin-end);
   @include rfs.font-size(var(--#{variables.$prefix}navbar-brand-font-size));
   color: var(--#{variables.$prefix}navbar-brand-color);
-  text-decoration: if(variables.$link-decoration == none, null, none);
+  @if variables.$link-decoration != none {
+    text-decoration: none;
+  }
   white-space: nowrap;
 
   &:hover,
   &:focus {
     color: var(--#{variables.$prefix}navbar-brand-hover-color);
-    text-decoration:
-      if(
-        variables.$link-hover-decoration == underline,
-        none,
-        null
-      );
+    @if variables.$link-hover-decoration == underline {
+      text-decoration: none;
+    }
   }
 }
 

@@ -2,7 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { signOut, useSession } from 'next-auth/react';
+import { AdminGuard } from '../../src/components/admin/AdminGuard';
+import ThemeToggleButton from '../../src/components/ui/ThemeToggleButton';
 
 interface NavItem {
   href: string;
@@ -52,12 +55,21 @@ const navItems: NavItem[] = [
     icon: 'bi-gear',
     children: [
       { href: '/admin/settings', label: 'Configurações', icon: 'bi-sliders' },
+      { href: '/admin/system/emails', label: 'Templates de Email', icon: 'bi-envelope-paper' },
       { href: '/admin/roles', label: 'Roles/Permissões', icon: 'bi-shield-lock' },
     ]
   },
 ];
 
-function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+function Sidebar({
+  collapsed,
+  onToggle,
+  storeName,
+}: {
+  collapsed: boolean;
+  onToggle: () => void;
+  storeName: string;
+}) {
   const pathname = usePathname();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
@@ -84,15 +96,22 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       }}
     >
       {/* Header */}
-      <div className="p-3 border-bottom border-secondary d-flex align-items-center justify-content-between">
-        {!collapsed && <span className="fw-bold">nb-store Admin</span>}
-        <button 
-          className="btn btn-sm btn-outline-light border-0"
-          onClick={onToggle}
-          title={collapsed ? 'Expandir' : 'Recolher'}
-        >
-          <i className={`bi ${collapsed ? 'bi-chevron-right' : 'bi-chevron-left'}`}></i>
-        </button>
+      <div className="p-3 border-bottom border-secondary d-flex align-items-center justify-content-between gap-2">
+        {!collapsed && (
+          <span className="fw-bold d-flex align-items-center gap-2">
+            <i className="bi bi-bug"></i>
+            {storeName} Painel
+          </span>
+        )}
+        <div className="d-flex align-items-center gap-2">
+          <button 
+            className="btn btn-sm btn-outline-light border-0"
+            onClick={onToggle}
+            title={collapsed ? 'Expandir' : 'Recolher'}
+          >
+            <i className={`bi ${collapsed ? 'bi-chevron-right' : 'bi-chevron-left'}`}></i>
+          </button>
+        </div>
       </div>
 
       {/* Navigation */}
@@ -158,8 +177,11 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
   );
 }
 
-function AdminHeader({ userName }: { userName?: string }) {
+function AdminHeader() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   
   const getBreadcrumbs = () => {
     const parts = pathname.split('/').filter(Boolean);
@@ -171,6 +193,18 @@ function AdminHeader({ userName }: { userName?: string }) {
   };
 
   const breadcrumbs = getBreadcrumbs();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <header className="bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center">
@@ -193,22 +227,34 @@ function AdminHeader({ userName }: { userName?: string }) {
           ))}
         </ol>
       </nav>
-      <div className="d-flex align-items-center gap-3">
-        <span className="text-muted small">{userName || 'Admin'}</span>
-        <div className="dropdown">
-          <button 
-            className="btn btn-sm btn-outline-secondary dropdown-toggle" 
-            type="button" 
-            data-bs-toggle="dropdown"
-          >
-            <i className="bi bi-person-circle"></i>
-          </button>
-          <ul className="dropdown-menu dropdown-menu-end">
-            <li><Link className="dropdown-item" href="/account/profile">Meu perfil</Link></li>
-            <li><hr className="dropdown-divider" /></li>
-            <li><Link className="dropdown-item text-danger" href="/api/auth/signout">Sair</Link></li>
-          </ul>
-        </div>
+      <div className="d-flex align-items-center gap-2 position-relative" ref={menuRef}>
+        <ThemeToggleButton />
+        <button
+          className="btn btn-sm btn-outline-secondary dropdown-toggle"
+          type="button"
+          onClick={() => setMenuOpen((prev) => !prev)}
+          aria-expanded={menuOpen}
+        >
+          <i className="bi bi-person-circle"></i>
+        </button>
+        <ul
+          className={`dropdown-menu dropdown-menu-end ${menuOpen ? 'show' : ''}`}
+          style={{ right: 0, left: 'auto', top: '100%', marginTop: '0.5rem' }}
+        >
+          <li>
+            <span className="dropdown-item-text small text-muted">
+              Olá, {session?.user?.name?.split(' ')[0] || 'Admin'}
+            </span>
+          </li>
+          <li><hr className="dropdown-divider" /></li>
+          <li><Link className="dropdown-item" href="/account/profile">Meu perfil</Link></li>
+          <li><hr className="dropdown-divider" /></li>
+          <li>
+            <button className="dropdown-item text-danger" onClick={() => signOut()}>
+              Sair
+            </button>
+          </li>
+        </ul>
       </div>
     </header>
   );
@@ -221,12 +267,31 @@ export default function AdminLayout({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [storeName, setStoreName] = useState('NoBugs Store');
 
   useEffect(() => {
     setMounted(true);
     // Recuperar preferência salva
     const saved = localStorage.getItem('admin-sidebar-collapsed');
     if (saved) setCollapsed(saved === 'true');
+  }, []);
+
+  useEffect(() => {
+    const loadStoreName = async () => {
+      try {
+        const res = await fetch('/api/admin/settings');
+        if (!res.ok) return;
+        const data = await res.json();
+        const settings = data?.settings ?? data;
+        if (settings?.storeName) {
+          setStoreName(settings.storeName);
+        }
+      } catch {
+        // noop
+      }
+    };
+
+    loadStoreName();
   }, []);
 
   const toggleSidebar = () => {
@@ -237,30 +302,34 @@ export default function AdminLayout({
 
   if (!mounted) {
     return (
-      <div className="d-flex min-vh-100">
-        <div style={{ width: 260 }} className="bg-dark"></div>
-        <div className="flex-grow-1">
-          <div className="bg-white border-bottom p-3" style={{ height: 60 }}></div>
-          <div className="p-4">{children}</div>
+      <AdminGuard>
+        <div className="d-flex min-vh-100">
+          <div style={{ width: 260 }} className="bg-dark"></div>
+          <div className="flex-grow-1">
+            <div className="bg-white border-bottom p-3" style={{ height: 60 }}></div>
+            <div className="p-4">{children}</div>
+          </div>
         </div>
-      </div>
+      </AdminGuard>
     );
   }
 
   return (
-    <div className="d-flex min-vh-100">
-      <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />
-      <div className="flex-grow-1 d-flex flex-column bg-light">
-        <AdminHeader />
-        <main className="flex-grow-1 p-4 overflow-auto">
-          {children}
-        </main>
+    <AdminGuard>
+      <div className="d-flex min-vh-100">
+        <Sidebar collapsed={collapsed} onToggle={toggleSidebar} storeName={storeName} />
+        <div className="flex-grow-1 d-flex flex-column bg-light">
+          <AdminHeader />
+          <main className="flex-grow-1 p-4 overflow-auto">
+            {children}
+          </main>
+        </div>
+        <style jsx global>{`
+          .hover-bg-secondary:hover {
+            background-color: rgba(108, 117, 125, 0.2) !important;
+          }
+        `}</style>
       </div>
-      <style jsx global>{`
-        .hover-bg-secondary:hover {
-          background-color: rgba(108, 117, 125, 0.2) !important;
-        }
-      `}</style>
-    </div>
+    </AdminGuard>
   );
 }

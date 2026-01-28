@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { buildAuthOptions } from '../../../../src/server/auth/options';
 import { prisma } from '../../../../src/server/db/client';
+import { applyCoupon, validateCoupon } from '../../../../src/server/pricing/coupon-service';
 
 interface ValidateRequest {
   code: string;
-  subtotal: number;
 }
 
 export async function POST(request: NextRequest) {
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     const userId = session.user.id;
     const body = await request.json() as ValidateRequest;
-    const { code, subtotal } = body;
+    const { code } = body;
 
     if (!code) {
       return NextResponse.json(
@@ -30,91 +30,73 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Buscar cupom com contagem de redemptions
-    const coupon = await prisma.coupon.findFirst({
-      where: {
-        code: code.toUpperCase().trim(),
-        isActive: true,
-      },
+    // Buscar carrinho do usuário para validar itens elegíveis
+    const cart = await prisma.cart.findUnique({
+      where: { userId },
       include: {
-        _count: {
-          select: { redemptions: true }
-        }
-      }
+        items: {
+          include: {
+            product: { select: { id: true, categoryId: true } },
+          },
+        },
+      },
+    });
+
+    if (!cart || cart.items.length === 0) {
+      return NextResponse.json(
+        { error: 'Carrinho vazio' },
+        { status: 400 }
+      );
+    }
+
+    const cartItems = cart.items.map((item) => ({
+      productId: item.productId,
+      variantId: item.variantId,
+      categoryId: item.product.categoryId,
+      quantity: item.quantity,
+      unitPrice: Math.round(item.unitPriceSnapshot * 100),
+    }));
+
+    const subtotalCents = cartItems.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0
+    );
+
+    const validation = await validateCoupon(
+      code,
+      userId,
+      subtotalCents,
+      cartItems
+    );
+
+    if (!validation.valid || !validation.coupon) {
+      return NextResponse.json(
+        { error: validation.error || 'Cupom inválido', errorCode: validation.errorCode },
+        { status: 400 }
+      );
+    }
+
+    const coupon = await prisma.coupon.findUnique({
+      where: { code: validation.coupon.code },
+      include: { products: true, categories: true },
     });
 
     if (!coupon) {
       return NextResponse.json(
-        { error: 'Cupom não encontrado ou inválido' },
+        { error: 'Cupom não encontrado' },
         { status: 404 }
       );
     }
 
-    // Verificar data de início
-    if (coupon.startsAt && coupon.startsAt > new Date()) {
-      return NextResponse.json(
-        { error: 'Este cupom ainda não está válido' },
-        { status: 400 }
-      );
-    }
+    const application = applyCoupon(
+      coupon.type as 'percent' | 'fixed',
+      coupon.value,
+      cartItems,
+      coupon.products,
+      coupon.categories
+    );
 
-    // Verificar data de expiração
-    if (coupon.endsAt && coupon.endsAt < new Date()) {
-      return NextResponse.json(
-        { error: 'Este cupom expirou' },
-        { status: 400 }
-      );
-    }
-
-    // Verificar limite de uso geral
-    if (coupon.maxUsesTotal && coupon._count.redemptions >= coupon.maxUsesTotal) {
-      return NextResponse.json(
-        { error: 'Este cupom atingiu o limite de uso' },
-        { status: 400 }
-      );
-    }
-
-    // Verificar limite de uso por usuário
-    if (coupon.maxUsesPerUser) {
-      const userRedemptions = await prisma.couponRedemption.count({
-        where: {
-          couponId: coupon.id,
-          userId: userId
-        }
-      });
-      if (userRedemptions >= coupon.maxUsesPerUser) {
-        return NextResponse.json(
-          { error: 'Você já utilizou este cupom o máximo de vezes permitido' },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Verificar valor mínimo do pedido (minSubtotalCents é em centavos)
-    const minOrderValue = coupon.minSubtotalCents ? coupon.minSubtotalCents / 100 : 0;
-    if (subtotal < minOrderValue) {
-      return NextResponse.json(
-        { 
-          error: `Valor mínimo para este cupom: R$ ${minOrderValue.toFixed(2).replace('.', ',')}`,
-          minOrderValue,
-        },
-        { status: 400 }
-      );
-    }
-
-    // Calcular desconto
-    let discount = 0;
-
-    if (coupon.type === 'percent') {
-      // value é percentual (1-100)
-      discount = subtotal * (coupon.value / 100);
-    } else {
-      // fixed: value é em centavos
-      discount = Math.min(coupon.value / 100, subtotal);
-    }
-
-    // Arredondar para 2 casas decimais
-    discount = Math.round(discount * 100) / 100;
+    const discount = Math.round((application.totalDiscount / 100) * 100) / 100;
 
     return NextResponse.json({
       valid: true,

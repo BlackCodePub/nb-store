@@ -86,7 +86,9 @@
     var(--#{variables.$prefix}list-group-item-padding-y)
     var(--#{variables.$prefix}list-group-item-padding-x);
   color: var(--#{variables.$prefix}list-group-color);
-  text-decoration: if(variables.$link-decoration == none, null, none);
+  @if variables.$link-decoration != none {
+    text-decoration: none;
+  }
   background-color: var(--#{variables.$prefix}list-group-bg);
   border:
     var(--#{variables.$prefix}list-group-border-width) solid

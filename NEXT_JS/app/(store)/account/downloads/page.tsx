@@ -7,6 +7,9 @@ interface Download {
   id: string;
   fileName: string;
   path: string;
+  type: string;
+  maxDownloads: number | null;
+  remainingDownloads: number | null;
   createdAt: string;
   expiresAt: string | null;
   isExpired: boolean;
@@ -48,6 +51,11 @@ export default function DownloadsPage() {
   const handleDownload = async (download: Download) => {
     if (download.isExpired) {
       alert('Este download expirou.');
+      return;
+    }
+
+    if (download.remainingDownloads !== null && download.remainingDownloads <= 0) {
+      alert('Limite de downloads atingido.');
       return;
     }
 
@@ -165,6 +173,9 @@ export default function DownloadsPage() {
                         <div>
                           <small className="text-muted d-block">Downloads</small>
                           <strong>{download.downloadsCount}</strong>
+                          {download.remainingDownloads !== null && (
+                            <small className="text-muted d-block">Restam {download.remainingDownloads}</small>
+                          )}
                         </div>
                         {download.expiresAt && (
                           <div>

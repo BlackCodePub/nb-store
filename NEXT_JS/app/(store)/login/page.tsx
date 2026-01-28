@@ -1,13 +1,16 @@
 "use client";
 
-import { Suspense, useMemo, useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Button } from '../../../src/components/ui/Button';
 import { Input } from '../../../src/components/ui/Input';
 
 function LoginForm() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -44,19 +47,32 @@ function LoginForm() {
     return from ? map[from] ?? '/' : '/';
   }, [searchParams]);
 
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.replace(redirectTo || '/');
+    }
+  }, [status, redirectTo, router]);
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     const result = await signIn('credentials', {
-      redirect: true,
+      redirect: false,
       callbackUrl: redirectTo || '/',
       email,
       password,
     });
-    // signIn with redirect true faz o redirect; se falhar, cai aqui
     setLoading(false);
-    if (result?.error) setError('Credenciais inválidas');
+    if (result?.error) {
+      setError('Credenciais inválidas');
+      return;
+    }
+    if (result?.ok) {
+      router.replace(result.url || redirectTo || '/');
+      return;
+    }
+    setError('Não foi possível autenticar. Tente novamente.');
   };
 
   return (

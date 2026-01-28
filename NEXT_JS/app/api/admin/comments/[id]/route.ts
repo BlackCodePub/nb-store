@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { buildAuthOptions } from '../../../../../src/server/auth/options';
 import { userIsAdmin, userHasPermission } from '../../../../../src/server/auth/rbac';
 import { prisma } from '../../../../../src/server/db/client';
+import { logAdminAction } from '../../../../../src/server/utils/audit-logger';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -44,6 +45,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       },
     });
 
+    logAdminAction('admin.comment_moderated', session.user.id, id, 'comment', { status });
+
     return NextResponse.json({
       comment: {
         ...comment,
@@ -76,6 +79,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
   try {
     await prisma.comment.delete({ where: { id } });
+    logAdminAction('admin.comment_moderated', session.user.id, id, 'comment', { action: 'deleted' });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Erro ao excluir comentário:', error);

@@ -41,6 +41,9 @@ Ambiente: **Produção (Vercel)**
 - [ ] `STORAGE_ACCESS_KEY` - Access key
 - [ ] `STORAGE_SECRET_KEY` - Secret key
 - [ ] `STORAGE_PUBLIC_URL` - URL pública do CDN
+- [ ] `STORAGE_PRIVATE_BASE_URL` - Base URL privada (downloads)
+- [ ] `STORAGE_SIGNING_SECRET` - Secret para assinar URLs
+- [ ] `STORAGE_SIGNED_URL_TTL_SECONDS` - TTL das URLs assinadas
 
 ### Discord (Gating)
 
@@ -205,6 +208,17 @@ Configurar em `vercel.json`:
 - [ ] Cookie consent aparecendo
 - [ ] Exportação de dados
 - [ ] Exclusão de conta
+
+---
+
+## ✅ Status de implementação (código)
+
+Itens abaixo já estão implementados no código e precisam apenas de validação/infra em produção:
+
+- Rate limiting em webhooks, comentários e downloads.
+- Webhook PagSeguro com idempotência e auditoria.
+- Downloads digitais com links assinados, expiração e limite.
+- Exportação LGPD com endpoint de download e notificação por e-mail.
 
 ---
 

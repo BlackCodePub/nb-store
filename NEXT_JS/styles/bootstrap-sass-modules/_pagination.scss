@@ -45,7 +45,9 @@
     var(--#{variables.$prefix}pagination-padding-x);
   @include rfs.font-size(var(--#{variables.$prefix}pagination-font-size));
   color: var(--#{variables.$prefix}pagination-color);
-  text-decoration: if(variables.$link-decoration == none, null, none);
+  @if variables.$link-decoration != none {
+    text-decoration: none;
+  }
   background-color: var(--#{variables.$prefix}pagination-bg);
   border:
     var(--#{variables.$prefix}pagination-border-width) solid
@@ -55,12 +57,9 @@
   &:hover {
     z-index: 2;
     color: var(--#{variables.$prefix}pagination-hover-color);
-    text-decoration:
-      if(
-        variables.$link-hover-decoration == underline,
-        none,
-        null
-      );
+    @if variables.$link-hover-decoration == underline {
+      text-decoration: none;
+    }
     background-color: var(--#{variables.$prefix}pagination-hover-bg);
     border-color: var(--#{variables.$prefix}pagination-hover-border-color);
   }

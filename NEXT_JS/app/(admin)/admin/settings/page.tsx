@@ -7,6 +7,14 @@ interface Settings {
   storeName: string;
   storeEmail: string;
   storePhone: string;
+  aboutTitle: string;
+  aboutDescription: string;
+  aboutSection1Title: string;
+  aboutSection1Description: string;
+  aboutSection2Title: string;
+  aboutSection2Description: string;
+  aboutSection3Title: string;
+  aboutSection3Description: string;
   
   // Moeda e Idioma
   defaultLocale: string;
@@ -30,6 +38,9 @@ interface Settings {
   lgpdEnabled: boolean;
   cookieConsentVersion: string;
   dataRetentionDays: number;
+
+  // Tema
+  storeTheme: 'default' | 'alt' | 'development' | 'maintenance';
 }
 
 export default function SettingsPage() {
@@ -37,6 +48,14 @@ export default function SettingsPage() {
     storeName: 'NB Store',
     storeEmail: '',
     storePhone: '',
+    aboutTitle: 'Sobre a loja',
+    aboutDescription: 'Aqui você encontra produtos digitais e físicos com entrega rápida e suporte dedicado.',
+    aboutSection1Title: 'Nossa missão',
+    aboutSection1Description: 'Oferecer uma experiência de compra simples, segura e transparente, com foco em qualidade e atendimento.',
+    aboutSection2Title: 'Contato',
+    aboutSection2Description: 'Em caso de dúvidas, fale com nosso time pelo canal de suporte.',
+    aboutSection3Title: '',
+    aboutSection3Description: '',
     defaultLocale: 'pt-BR',
     defaultCurrency: 'BRL',
     pagseguroEnv: 'sandbox',
@@ -50,6 +69,7 @@ export default function SettingsPage() {
     lgpdEnabled: true,
     cookieConsentVersion: '1.0',
     dataRetentionDays: 365,
+    storeTheme: 'default',
   });
   
   const [loading, setLoading] = useState(false);
@@ -66,7 +86,8 @@ export default function SettingsPage() {
       const res = await fetch('/api/admin/settings');
       if (res.ok) {
         const data = await res.json();
-        setSettings(prev => ({ ...prev, ...data }));
+        const payload = data?.settings ?? data;
+        setSettings(prev => ({ ...prev, ...payload }));
       }
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
@@ -106,6 +127,7 @@ export default function SettingsPage() {
     { id: 'shipping', label: 'Frete', icon: 'bi-truck' },
     { id: 'discord', label: 'Discord', icon: 'bi-discord' },
     { id: 'privacy', label: 'Privacidade', icon: 'bi-shield-check' },
+    { id: 'theme', label: 'Temas', icon: 'bi-palette' },
   ];
 
   return (
@@ -194,6 +216,95 @@ export default function SettingsPage() {
                       value={settings.storePhone || ''}
                       onChange={(e) => handleChange('storePhone', e.target.value)}
                       placeholder="(11) 99999-9999"
+                    />
+                  </div>
+
+                  <hr className="my-4" />
+                  <h6 className="mb-3">Página Sobre</h6>
+
+                  <div className="mb-3">
+                    <label className="form-label">Título</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={settings.aboutTitle || ''}
+                      onChange={(e) => handleChange('aboutTitle', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Descrição</label>
+                    <textarea
+                      className="form-control"
+                      rows={3}
+                      value={settings.aboutDescription || ''}
+                      onChange={(e) => handleChange('aboutDescription', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Título 1</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={settings.aboutSection1Title || ''}
+                      onChange={(e) => handleChange('aboutSection1Title', e.target.value)}
+                      placeholder="Opcional"
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Descrição 1</label>
+                    <textarea
+                      className="form-control"
+                      rows={3}
+                      value={settings.aboutSection1Description || ''}
+                      onChange={(e) => handleChange('aboutSection1Description', e.target.value)}
+                      placeholder="Opcional"
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Título 2</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={settings.aboutSection2Title || ''}
+                      onChange={(e) => handleChange('aboutSection2Title', e.target.value)}
+                      placeholder="Opcional"
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Descrição 2</label>
+                    <textarea
+                      className="form-control"
+                      rows={3}
+                      value={settings.aboutSection2Description || ''}
+                      onChange={(e) => handleChange('aboutSection2Description', e.target.value)}
+                      placeholder="Opcional"
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Título 3</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={settings.aboutSection3Title || ''}
+                      onChange={(e) => handleChange('aboutSection3Title', e.target.value)}
+                      placeholder="Opcional"
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Descrição 3</label>
+                    <textarea
+                      className="form-control"
+                      rows={3}
+                      value={settings.aboutSection3Description || ''}
+                      onChange={(e) => handleChange('aboutSection3Description', e.target.value)}
+                      placeholder="Opcional"
                     />
                   </div>
                 </div>
@@ -401,6 +512,30 @@ export default function SettingsPage() {
                       max={3650}
                     />
                     <div className="form-text">Período de retenção de logs e dados não essenciais</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Temas */}
+              {activeTab === 'theme' && (
+                <div>
+                  <h5 className="card-title mb-4">Tema da Home</h5>
+                  <div className="mb-3">
+                    <label className="form-label">Tema ativo</label>
+                    <select
+                      className="form-select"
+                      value={settings.storeTheme || 'default'}
+                      onChange={(e) => handleChange('storeTheme', e.target.value as Settings['storeTheme'])}
+                    >
+                      <option value="default">Padrão</option>
+                      <option value="alt">Alternativo (Home Alt)</option>
+                      <option value="development">Desenvolvimento</option>
+                      <option value="maintenance">Manutenção</option>
+                    </select>
+                  </div>
+                  <div className="alert alert-info">
+                    <i className="bi bi-info-circle me-2"></i>
+                    Esse tema define qual versão da home aparece em <strong>/</strong>.
                   </div>
                 </div>
               )}

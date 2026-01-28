@@ -12,8 +12,7 @@ interface PostFormData {
 
 const LOCALES = [
   { code: 'pt-BR', name: 'Português (BR)' },
-  { code: 'en', name: 'English' },
-  { code: 'es', name: 'Español' },
+  { code: 'en-US', name: 'English (US)' },
 ];
 
 function slugify(value: string): string {
@@ -40,8 +39,7 @@ export default function NewPostPage() {
   // Traduções por locale
   const [translations, setTranslations] = useState<Record<string, { title: string; content: string; excerpt: string }>>({
     'pt-BR': { title: '', content: '', excerpt: '' },
-    'en': { title: '', content: '', excerpt: '' },
-    'es': { title: '', content: '', excerpt: '' },
+    'en-US': { title: '', content: '', excerpt: '' },
   });
 
   const handleTranslationChange = (locale: string, field: 'title' | 'content' | 'excerpt', value: string) => {
@@ -96,7 +94,7 @@ export default function NewPostPage() {
       const data = await res.json();
       
       // Se houver traduções em outros idiomas, salvar
-      for (const locale of ['en', 'es']) {
+      for (const locale of ['en-US']) {
         const trans = translations[locale];
         if (trans.title || trans.content) {
           await fetch(`/api/admin/posts/${data.post.id}`, {

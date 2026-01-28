@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getLocaleFromRequest } from './src/i18n/config';
+import { getCurrencyFromRequest, getLocaleFromRequest } from './src/i18n/config';
 import { getCorrelationId } from './src/server/utils/logger';
 
 const ADMIN_HOST_KEYWORDS = ['admin.', 'admin-local'];
@@ -15,6 +15,11 @@ export function proxy(req: NextRequest) {
   const locale = getLocaleFromRequest(req);
   if (!req.cookies.get('NEXT_LOCALE')) {
     res.cookies.set('NEXT_LOCALE', locale, { path: '/', httpOnly: false });
+  }
+
+  const currency = getCurrencyFromRequest(req);
+  if (!req.cookies.get('NEXT_CURRENCY')) {
+    res.cookies.set('NEXT_CURRENCY', currency, { path: '/', httpOnly: false });
   }
 
   const host = req.headers.get('host') || '';

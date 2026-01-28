@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "build": "next build",
     "test": "tsx --test \"__tests__/**/*.test.ts\"",
     "test:e2e": "playwright test",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",

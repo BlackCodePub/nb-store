@@ -1,6 +1,14 @@
 import Link from 'next/link';
 import { prisma } from '../src/server/db/client';
 import type { Decimal } from '@prisma/client/runtime/library';
+import UserMenuDropdown from '../src/components/store/UserMenuDropdown';
+import NewsletterForm from '../src/components/store/NewsletterForm';
+import BannerSlider from '../src/components/store/BannerSlider';
+import HomeAltContent from '../src/components/store/HomeAltContent';
+import HomeAltShell from '../src/components/store/HomeAltShell';
+import ThemeToggleButton from '../src/components/ui/ThemeToggleButton';
+import { getServerLocale } from '../src/i18n/server';
+import { defaultLocale } from '../src/i18n/config';
 
 // Type assertion para garantir acesso a todos os models
 const db = prisma as any;
@@ -30,7 +38,270 @@ function formatDate(date: Date): string {
   }).format(date);
 }
 
+async function getParentCategoriesWithChildProducts(db: typeof prisma) {
+  const parents = await db.category.findMany({
+    where: {
+      parentId: null,
+      OR: [
+        { products: { some: { active: true } } },
+        { children: { some: { products: { some: { active: true } } } } },
+      ],
+    },
+    include: {
+      _count: {
+        select: {
+          products: { where: { active: true } },
+        },
+      },
+      children: {
+        include: {
+          _count: { select: { products: { where: { active: true } } } },
+        },
+      },
+    },
+    orderBy: { name: 'asc' },
+  });
+
+  return parents
+    .map((cat) => ({
+      ...cat,
+      _count: {
+        products:
+          cat._count.products +
+          cat.children.reduce((sum, child) => sum + child._count.products, 0),
+      },
+    }))
+    .filter((cat) => cat._count.products > 0);
+}
+
 export default async function HomePage() {
+  const [themeSetting, storeNameSetting] = await Promise.all([
+    db.setting.findUnique({ where: { key: 'storeTheme' } }),
+    db.setting.findUnique({ where: { key: 'storeName' } }),
+  ]);
+  let storeTheme = 'default';
+  if (themeSetting?.value) {
+    try {
+      storeTheme = JSON.parse(themeSetting.value);
+    } catch {
+      storeTheme = themeSetting.value;
+    }
+  }
+
+  let storeName = 'NoBugs Store';
+  if (storeNameSetting?.value) {
+    try {
+      storeName = JSON.parse(storeNameSetting.value);
+    } catch {
+      storeName = storeNameSetting.value;
+    }
+  }
+
+  if (storeTheme === 'alt') {
+    const locale = await getServerLocale();
+    const translationLocales = locale === defaultLocale ? [defaultLocale] : [locale, defaultLocale];
+    const now = new Date();
+
+    let banners: any[] = [];
+    try {
+      banners = await db.banner.findMany({
+        where: {
+          active: true,
+          OR: [
+            { startsAt: null, endsAt: null },
+            { startsAt: { lte: now }, endsAt: null },
+            { startsAt: null, endsAt: { gte: now } },
+            { startsAt: { lte: now }, endsAt: { gte: now } },
+          ],
+        },
+        orderBy: { position: 'asc' },
+      });
+    } catch (error) {
+      console.error('[ERROR] Erro ao buscar banners:', error);
+    }
+
+    const categories = await getParentCategoriesWithChildProducts(db);
+
+    const newProducts = await db.product.findMany({
+      where: { active: true },
+      include: {
+        category: true,
+        images: { orderBy: { position: 'asc' }, take: 1 },
+        variants: { take: 1 },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 4,
+    });
+
+    const featuredProducts = await db.product.findMany({
+      where: { active: true },
+      include: {
+        category: true,
+        images: { orderBy: { position: 'asc' }, take: 1 },
+        variants: { take: 1 },
+        _count: { select: { orderItems: true } },
+      },
+      orderBy: { orderItems: { _count: 'desc' } },
+      take: 4,
+    });
+
+    const blogPosts = await db.post.findMany({
+      where: { isPublished: true },
+      orderBy: { publishedAt: 'desc' },
+      take: 3,
+      include: {
+        translations: {
+          where: { locale: { in: translationLocales } },
+        },
+      },
+    });
+
+    return (
+      <HomeAltShell>
+        <HomeAltContent
+          locale={locale}
+          banners={banners}
+          categories={categories}
+          newProducts={newProducts}
+          featuredProducts={featuredProducts}
+          blogPosts={blogPosts}
+        />
+      </HomeAltShell>
+    );
+  }
+
+  if (storeTheme === 'development') {
+    return (
+      <div className="min-vh-100 d-flex flex-column bg-light">
+        <main className="flex-fill">
+          {/* Banner estático */}
+          <section className="bg-dark text-white py-5">
+            <div className="container text-center">
+              <h1 className="display-6 fw-bold mb-3">{storeName}</h1>
+              <p className="lead mb-0">Estamos preparando uma nova experiência para você.</p>
+            </div>
+          </section>
+
+          {/* Seção Desenvolvimento */}
+          <section className="py-5">
+            <div className="container">
+              <div className="row justify-content-center">
+                <div className="col-lg-7 text-center">
+                  <div className="card border-0 shadow-sm">
+                    <div className="card-body py-5">
+                      <i className="bi bi-code-slash text-primary" style={{ fontSize: '2.5rem' }}></i>
+                      <h2 className="h4 mt-3 mb-2">Site em desenvolvimento</h2>
+                      <p className="text-muted mb-0">
+                        Em breve você poderá navegar por nossos conteúdos. Enquanto isso, deixe seu e-mail.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Newsletter */}
+          <section className="py-5 bg-primary text-white">
+            <div className="container">
+              <div className="row justify-content-center">
+                <div className="col-lg-6 text-center">
+                  <h2 className="h4 mb-3">
+                    <i className="bi bi-envelope-heart me-2"></i>
+                    Receba Novidades
+                  </h2>
+                  <p className="mb-4">
+                    Cadastre-se para receber o lançamento em primeira mão.
+                  </p>
+                  <NewsletterForm />
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        {/* Footer */}
+        <footer className="border-top bg-white">
+          <div className="container py-3 small text-muted">© {new Date().getFullYear()} nb-store</div>
+        </footer>
+      </div>
+    );
+  }
+
+  if (storeTheme === 'maintenance') {
+    return (
+      <div className="min-vh-100 d-flex flex-column bg-light">
+        {/* Header simples com menu superior */}
+        <header className="border-bottom bg-white sticky-top">
+          <div className="container py-3 d-flex justify-content-between align-items-center">
+            <Link href="/" className="text-decoration-none">
+              <h1 className="h4 mb-0 fw-bold text-primary">
+                <i className="bi bi-bug me-2"></i>
+                {storeName}
+              </h1>
+            </Link>
+            <div className="d-flex align-items-center gap-3">
+              <ThemeToggleButton />
+              <UserMenuDropdown />
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-fill">
+          {/* Banner estático */}
+          <section className="bg-dark text-white py-5">
+            <div className="container text-center">
+              <h1 className="display-6 fw-bold mb-3">{storeName}</h1>
+              <p className="lead mb-0">Estamos realizando melhorias temporárias.</p>
+            </div>
+          </section>
+
+          {/* Seção Manutenção */}
+          <section className="py-5">
+            <div className="container">
+              <div className="row justify-content-center">
+                <div className="col-lg-7 text-center">
+                  <div className="card border-0 shadow-sm">
+                    <div className="card-body py-5">
+                      <i className="bi bi-tools text-warning" style={{ fontSize: '2.5rem' }}></i>
+                      <h2 className="h4 mt-3 mb-2">Site em manutenção</h2>
+                      <p className="text-muted mb-0">
+                        Voltamos em breve. Deixe seu e-mail para avisarmos quando o site estiver no ar.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Newsletter */}
+          <section className="py-5 bg-primary text-white">
+            <div className="container">
+              <div className="row justify-content-center">
+                <div className="col-lg-6 text-center">
+                  <h2 className="h4 mb-3">
+                    <i className="bi bi-envelope-heart me-2"></i>
+                    Receba Novidades
+                  </h2>
+                  <p className="mb-4">
+                    Cadastre-se para receber o retorno do site.
+                  </p>
+                  <NewsletterForm />
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        {/* Footer */}
+        <footer className="border-top bg-white">
+          <div className="container py-3 small text-muted">© {new Date().getFullYear()} nb-store</div>
+        </footer>
+      </div>
+    );
+  }
+
   const now = new Date();
 
   // Buscar banners ativos
@@ -48,12 +319,7 @@ export default async function HomePage() {
   });
 
   // Buscar categorias com contagem de produtos
-  const categories = await db.category.findMany({
-    include: {
-      _count: { select: { products: true } },
-    },
-    orderBy: { name: 'asc' },
-  });
+  const categories = await getParentCategoriesWithChildProducts(db);
 
   // Buscar produtos ativos em destaque (últimos 8)
   const featuredProducts = await db.product.findMany({
@@ -80,74 +346,48 @@ export default async function HomePage() {
     },
   });
 
-  // Pegar o primeiro banner ativo (se existir)
-  const activeBanner = banners[0];
-
   return (
     <div className="min-vh-100 d-flex flex-column bg-light">
       {/* Header */}
       <header className="border-bottom bg-white">
         <div className="container py-3 d-flex justify-content-between align-items-center">
-          <Link href="/" className="fw-bold text-decoration-none text-dark fs-4">nb-store</Link>
-          <nav className="d-flex gap-3 small text-uppercase">
-            <Link href="/" className="text-decoration-none text-dark">Home</Link>
-            <Link href="/products" className="text-decoration-none text-dark">Produtos</Link>
-            <Link href="/account" className="text-decoration-none text-dark">Minha Conta</Link>
-            <Link href="/cart" className="text-decoration-none text-dark">🛒 Carrinho</Link>
-          </nav>
+          <Link href="/" className="text-decoration-none">
+            <h1 className="h4 mb-0 fw-bold text-primary">
+              <i className="bi bi-bug me-2"></i>
+              {storeName}
+            </h1>
+          </Link>
+          <div className="d-flex align-items-center gap-3">
+            <nav className="d-flex gap-3 small text-uppercase">
+              <Link href="/" className="text-decoration-none text-dark">Home</Link>
+              <Link href="/products" className="text-decoration-none text-dark">Produtos</Link>
+              <Link href="/cart" className="text-decoration-none text-dark">🛒 Carrinho</Link>
+            </nav>
+            <UserMenuDropdown />
+          </div>
         </div>
       </header>
 
       <main className="flex-fill">
         {/* Hero Section / Banner */}
-        {activeBanner ? (
-          <section 
-            className="text-white py-5"
-            style={{
-              minHeight: 400,
-              backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.7), rgba(0,0,0,0.3)), url(${activeBanner.imageUrl})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          >
+        <BannerSlider banners={banners} />
+
+        {categories.length > 0 && (
+          <section className="py-3 bg-white border-bottom">
             <div className="container">
-              <div className="row align-items-center" style={{ minHeight: 300 }}>
-                <div className="col-lg-8">
-                  <h1 className="display-4 fw-bold mb-3">{activeBanner.title}</h1>
-                  {activeBanner.subtitle && (
-                    <p className="lead mb-4">{activeBanner.subtitle}</p>
-                  )}
-                  {activeBanner.linkUrl && (
-                    <a href={activeBanner.linkUrl} className="btn btn-light btn-lg">
-                      {activeBanner.buttonText || 'Saiba Mais'}
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
-        ) : (
-          <section className="bg-primary text-white py-5">
-            <div className="container">
-              <div className="row align-items-center">
-                <div className="col-lg-6">
-                  <h1 className="display-4 fw-bold mb-3">NoBugs Store</h1>
-                  <p className="lead mb-4">
-                    Produtos digitais e físicos de alta qualidade. Entrega rápida e segura.
-                  </p>
-                  <Link href="/products" className="btn btn-light btn-lg">
-                    Ver Produtos
+              <div className="d-flex flex-wrap gap-2">
+                <Link href="/products" className="btn btn-sm btn-outline-primary">
+                  Todas
+                </Link>
+                {categories.map((cat) => (
+                  <Link
+                    key={cat.id}
+                    href={`/products?category=${cat.slug}`}
+                    className="btn btn-sm btn-outline-primary"
+                  >
+                    {cat.name}
                   </Link>
-                </div>
-                <div className="col-lg-6 d-none d-lg-block text-center">
-                  <svg width="300" height="200" viewBox="0 0 300 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="50" y="30" width="200" height="140" rx="10" fill="white" fillOpacity="0.2"/>
-                    <rect x="70" y="50" width="60" height="60" rx="5" fill="white" fillOpacity="0.3"/>
-                    <rect x="140" y="50" width="60" height="60" rx="5" fill="white" fillOpacity="0.3"/>
-                    <rect x="70" y="120" width="130" height="10" rx="2" fill="white" fillOpacity="0.3"/>
-                    <rect x="70" y="135" width="80" height="10" rx="2" fill="white" fillOpacity="0.3"/>
-                  </svg>
-                </div>
+                ))}
               </div>
             </div>
           </section>
@@ -164,7 +404,7 @@ export default async function HomePage() {
                 {categories.map((cat) => (
                   <div key={cat.id} className="col-6 col-md-4 col-lg-3">
                     <Link
-                      href={`/category/${cat.slug}`}
+                      href={`/products?category=${cat.slug}`}
                       className="card h-100 text-decoration-none border-0 shadow-sm"
                     >
                       <div className="card-body text-center">
@@ -332,6 +572,24 @@ export default async function HomePage() {
             </div>
           </section>
         )}
+
+        {/* Newsletter */}
+        <section className="py-5 bg-primary text-white">
+          <div className="container">
+            <div className="row justify-content-center">
+              <div className="col-lg-6 text-center">
+                <h2 className="h4 mb-3">
+                  <i className="bi bi-envelope-heart me-2"></i>
+                  Receba Novidades
+                </h2>
+                <p className="mb-4">
+                  Cadastre-se para receber ofertas exclusivas e lançamentos em primeira mão.
+                </p>
+                <NewsletterForm />
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useLocale } from '../../../src/i18n/I18nContext';
 
 interface Post {
   id: string;
@@ -13,6 +14,7 @@ interface Post {
 }
 
 export default function BlogPage() {
+  const { locale } = useLocale();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -20,7 +22,7 @@ export default function BlogPage() {
   
   useEffect(() => {
     fetchPosts();
-  }, [page]);
+  }, [page, locale]);
   
   const fetchPosts = async () => {
     setLoading(true);
@@ -77,7 +79,7 @@ export default function BlogPage() {
                   
                   <div className="card-footer bg-transparent d-flex justify-content-between align-items-center">
                     <small className="text-muted">
-                      {post.publishedAt && new Date(post.publishedAt).toLocaleDateString('pt-BR')}
+                      {post.publishedAt && new Date(post.publishedAt).toLocaleDateString(locale)}
                     </small>
                     
                     <small className="text-muted">

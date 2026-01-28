@@ -8,6 +8,9 @@ import {
   createCheckoutSession,
   type PagSeguroChargeRequest,
 } from '../../../src/server/payments/pagseguro-service';
+import { applyCoupon, validateCoupon } from '../../../src/server/pricing/coupon-service';
+import { getCurrentExchangeRate } from '../../../src/server/fx/exchange-rate-service';
+import { getUserDiscordAccount, getDiscordUserGuilds, checkCheckoutGating } from '../../../src/server/discord/discord-gating-service';
 
 // URL base para redirecionamentos
 const BASE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000';
@@ -97,12 +100,23 @@ export async function POST(request: NextRequest) {
 
     // Calcular subtotal
     let subtotal = 0;
+    let subtotalCents = 0;
     const orderItems = [];
+    const cartItemsForCoupon = [] as {
+      productId: string;
+      variantId?: string | null;
+      categoryId?: string | null;
+      quantity: number;
+      unitPrice: number;
+    }[];
+
+    const gatingItems = [] as { productId: string; categoryId?: string | null }[];
 
     for (const cartItem of cart.items) {
       const price = cartItem.variant?.price ?? cartItem.product.price;
       const itemTotal = price * cartItem.quantity;
       subtotal += itemTotal;
+      subtotalCents += Math.round(price * 100) * cartItem.quantity;
 
       orderItems.push({
         productId: cartItem.productId,
@@ -111,6 +125,41 @@ export async function POST(request: NextRequest) {
         price: price,
         name: cartItem.product.name + (cartItem.variant ? ` - ${cartItem.variant.name}` : ''),
       });
+
+      cartItemsForCoupon.push({
+        productId: cartItem.productId,
+        variantId: cartItem.variantId,
+        categoryId: cartItem.product.categoryId,
+        quantity: cartItem.quantity,
+        unitPrice: Math.round(price * 100),
+      });
+
+      gatingItems.push({
+        productId: cartItem.productId,
+        categoryId: cartItem.product.categoryId,
+      });
+    }
+
+    // Discord gating
+    const discordAccount = await getUserDiscordAccount(userId);
+    let userDiscordId: string | null = null;
+    let userGuilds: string[] = [];
+
+    if (discordAccount?.access_token) {
+      userDiscordId = discordAccount.providerAccountId;
+      const guilds = await getDiscordUserGuilds(discordAccount.access_token);
+      userGuilds = guilds.map((g) => g.id);
+    }
+
+    const gatingResult = await checkCheckoutGating(gatingItems, userDiscordId, userGuilds);
+    if (!gatingResult.allowed) {
+      return NextResponse.json(
+        {
+          error: gatingResult.reason || 'Requisitos do Discord não atendidos',
+          blockedItems: gatingResult.blockedItems,
+        },
+        { status: 403 }
+      );
     }
 
     // Aplicar desconto do cupom se houver
@@ -119,74 +168,43 @@ export async function POST(request: NextRequest) {
     let validCouponCode: string | null = null;
 
     if (couponCode) {
-      const coupon = await prisma.coupon.findFirst({
-        where: {
-          code: couponCode.toUpperCase(),
-          isActive: true,
-          OR: [
-            { startsAt: null },
-            { startsAt: { lte: new Date() } },
-          ],
-        },
-        include: {
-          _count: {
-            select: { redemptions: true }
-          }
-        }
+      const validation = await validateCoupon(
+        couponCode,
+        userId,
+        subtotalCents,
+        cartItemsForCoupon
+      );
+
+      if (!validation.valid || !validation.coupon) {
+        return NextResponse.json(
+          { error: validation.error || 'Cupom inválido' },
+          { status: 400 }
+        );
+      }
+
+      const coupon = await prisma.coupon.findUnique({
+        where: { code: validation.coupon.code },
+        include: { products: true, categories: true },
       });
 
-      if (coupon) {
-        // Verificar se ainda não expirou
-        if (coupon.endsAt && coupon.endsAt < new Date()) {
-          return NextResponse.json(
-            { error: 'Cupom expirado' },
-            { status: 400 }
-          );
-        }
-
-        // Verificar limite de uso total
-        if (coupon.maxUsesTotal && coupon._count.redemptions >= coupon.maxUsesTotal) {
-          return NextResponse.json(
-            { error: 'Cupom esgotado' },
-            { status: 400 }
-          );
-        }
-
-        // Verificar limite de uso por usuário
-        if (coupon.maxUsesPerUser) {
-          const userRedemptions = await prisma.couponRedemption.count({
-            where: {
-              couponId: coupon.id,
-              userId: userId
-            }
-          });
-          if (userRedemptions >= coupon.maxUsesPerUser) {
-            return NextResponse.json(
-              { error: 'Você já utilizou este cupom o máximo de vezes permitido' },
-              { status: 400 }
-            );
-          }
-        }
-
-        // Verificar valor mínimo (minSubtotalCents é em centavos)
-        if (coupon.minSubtotalCents && subtotal * 100 < coupon.minSubtotalCents) {
-          return NextResponse.json(
-            { error: `Valor mínimo para este cupom: R$ ${(coupon.minSubtotalCents / 100).toFixed(2)}` },
-            { status: 400 }
-          );
-        }
-
-        // Calcular desconto (value é em centavos para fixed ou percentual 1-100 para percent)
-        if (coupon.type === 'percent') {
-          discount = subtotal * (coupon.value / 100);
-        } else {
-          // fixed: value é em centavos
-          discount = coupon.value / 100;
-        }
-
-        couponId = coupon.id;
-        validCouponCode = coupon.code;
+      if (!coupon) {
+        return NextResponse.json(
+          { error: 'Cupom não encontrado' },
+          { status: 404 }
+        );
       }
+
+      const application = applyCoupon(
+        coupon.type as 'percent' | 'fixed',
+        coupon.value,
+        cartItemsForCoupon,
+        coupon.products,
+        coupon.categories
+      );
+
+      discount = application.totalDiscount / 100;
+      couponId = coupon.id;
+      validCouponCode = coupon.code;
     }
 
     // Desconto do PIX (5%)
@@ -197,6 +215,9 @@ export async function POST(request: NextRequest) {
     // Calcular total final
     const shippingPrice = shipping.price;
     const total = Math.max(0, subtotal - discount + shippingPrice);
+
+    const exchangeRate = await getCurrentExchangeRate().catch(() => null);
+    const fxRateUsed = exchangeRate?.rate ?? null;
 
     // Criar pedido em transação
     const order = await prisma.$transaction(async (tx) => {
@@ -210,8 +231,19 @@ export async function POST(request: NextRequest) {
           shippingTotal: shippingPrice,
           total,
           couponCode: validCouponCode,
+          fxRateUsed: fxRateUsed ?? undefined,
         },
       });
+
+      if (couponId) {
+        await tx.couponRedemption.create({
+          data: {
+            couponId,
+            userId,
+            orderId: newOrder.id,
+          },
+        });
+      }
 
       // 2. Criar endereço de entrega
       await tx.orderAddress.create({

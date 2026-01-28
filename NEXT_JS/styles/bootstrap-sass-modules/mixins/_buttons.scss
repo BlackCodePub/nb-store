@@ -21,60 +21,80 @@
       variables.$white,
       variables.$black
     ),
-  $hover-background:
-    if(
-      $color == variables.$color-contrast-light,
-      functions.shade-color($background, variables.$btn-hover-bg-shade-amount),
-      functions.tint-color($background, variables.$btn-hover-bg-tint-amount)
-    ),
-  $hover-border:
-    if(
-      $color == variables.$color-contrast-light,
-      functions.shade-color($border, variables.$btn-hover-border-shade-amount),
-      functions.tint-color($border, variables.$btn-hover-border-tint-amount)
-    ),
-  $hover-color:
-    functions.color-contrast(
+  $hover-background: null,
+  $hover-border: null,
+  $hover-color: null,
+  $active-background: null,
+  $active-border: null,
+  $active-color: null,
+  $disabled-background: $background,
+  $disabled-border: $border,
+  $disabled-color: null
+) {
+  @if $hover-background == null {
+    @if $color == variables.$color-contrast-light {
+      $hover-background: functions.shade-color($background, variables.$btn-hover-bg-shade-amount);
+    } @else {
+      $hover-background: functions.tint-color($background, variables.$btn-hover-bg-tint-amount);
+    }
+  }
+
+  @if $hover-border == null {
+    @if $color == variables.$color-contrast-light {
+      $hover-border: functions.shade-color($border, variables.$btn-hover-border-shade-amount);
+    } @else {
+      $hover-border: functions.tint-color($border, variables.$btn-hover-border-tint-amount);
+    }
+  }
+
+  @if $active-background == null {
+    @if $color == variables.$color-contrast-light {
+      $active-background: functions.shade-color($background, variables.$btn-active-bg-shade-amount);
+    } @else {
+      $active-background: functions.tint-color($background, variables.$btn-active-bg-tint-amount);
+    }
+  }
+
+  @if $active-border == null {
+    @if $color == variables.$color-contrast-light {
+      $active-border: functions.shade-color($border, variables.$btn-active-border-shade-amount);
+    } @else {
+      $active-border: functions.tint-color($border, variables.$btn-active-border-tint-amount);
+    }
+  }
+
+  @if $hover-color == null {
+    $hover-color: functions.color-contrast(
       $hover-background,
       variables.$color-contrast-dark,
       variables.$color-contrast-light,
       variables.$min-contrast-ratio,
       variables.$white,
       variables.$black
-    ),
-  $active-background:
-    if(
-      $color == variables.$color-contrast-light,
-      functions.shade-color($background, variables.$btn-active-bg-shade-amount),
-      functions.tint-color($background, variables.$btn-active-bg-tint-amount)
-    ),
-  $active-border:
-    if(
-      $color == variables.$color-contrast-light,
-      functions.shade-color($border, variables.$btn-active-border-shade-amount),
-      functions.tint-color($border, variables.$btn-active-border-tint-amount)
-    ),
-  $active-color:
-    functions.color-contrast(
+    );
+  }
+
+  @if $active-color == null {
+    $active-color: functions.color-contrast(
       $active-background,
       variables.$color-contrast-dark,
       variables.$color-contrast-light,
       variables.$min-contrast-ratio,
       variables.$white,
       variables.$black
-    ),
-  $disabled-background: $background,
-  $disabled-border: $border,
-  $disabled-color:
-    functions.color-contrast(
+    );
+  }
+
+  @if $disabled-color == null {
+    $disabled-color: functions.color-contrast(
       $disabled-background,
       variables.$color-contrast-dark,
       variables.$color-contrast-light,
       variables.$min-contrast-ratio,
       variables.$white,
       variables.$black
-    )
-) {
+    );
+  }
   --#{variables.$prefix}btn-color: #{$color};
   --#{variables.$prefix}btn-bg: #{$background};
   --#{variables.$prefix}btn-border-color: #{$border};
@@ -97,27 +117,32 @@
 // scss-docs-start btn-outline-variant-mixin
 @mixin button-outline-variant(
   $color,
-  $color-hover:
-  functions.color-contrast(
-    $color,
-    variables.$color-contrast-dark,
-    variables.$color-contrast-light,
-    variables.$min-contrast-ratio,
-      variables.$white,
-      variables.$black
-    ),
+  $color-hover: null,
   $active-background: $color,
   $active-border: $color,
-  $active-color:
-    functions.color-contrast(
+  $active-color: null
+) {
+  @if $color-hover == null {
+    $color-hover: functions.color-contrast(
+      $color,
+      variables.$color-contrast-dark,
+      variables.$color-contrast-light,
+      variables.$min-contrast-ratio,
+      variables.$white,
+      variables.$black
+    );
+  }
+
+  @if $active-color == null {
+    $active-color: functions.color-contrast(
       $active-background,
       variables.$color-contrast-dark,
       variables.$color-contrast-light,
       variables.$min-contrast-ratio,
       variables.$white,
       variables.$black
-    )
-) {
+    );
+  }
   --#{variables.$prefix}btn-color: #{$color};
   --#{variables.$prefix}btn-border-color: #{$color};
   --#{variables.$prefix}btn-hover-color: #{$color-hover};

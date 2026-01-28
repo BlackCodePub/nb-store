@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { buildAuthOptions } from '../../../../src/server/auth/options';
 import { prisma } from '../../../../src/server/db/client';
+import { processDataExport } from '../../../../src/server/privacy/lgpd-service';
 
 // POST - Solicitar exportação de dados (LGPD)
 export async function POST() {
@@ -35,13 +36,13 @@ export async function POST() {
       },
     });
 
-    // TODO: Em produção, isso seria processado por um job de background
-    // que coleta todos os dados do usuário e envia por e-mail
+    // Dispara processamento assíncrono (em produção, substituir por job/queue)
+    void processDataExport(exportRequest.id);
 
     return NextResponse.json({
       success: true,
       requestId: exportRequest.id,
-      message: 'Solicitação de exportação criada. Você receberá um e-mail em até 48 horas.',
+      message: 'Solicitação de exportação criada. Você receberá um e-mail quando estiver pronta.',
     });
   } catch (error) {
     console.error('Erro ao solicitar exportação:', error);

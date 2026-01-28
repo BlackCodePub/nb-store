@@ -39,9 +39,9 @@ providers.push(
     },
     async authorize(credentials) {
       if (!credentials?.email || !credentials.password) return null;
-      if (!isStrongPassword(credentials.password)) return null;
 
-      const user = await prisma.user.findUnique({ where: { email: credentials.email } });
+      const normalizedEmail = credentials.email.toLowerCase().trim();
+      const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
       if (!user?.passwordHash) return null;
 
       const ok = await bcrypt.compare(credentials.password, user.passwordHash);

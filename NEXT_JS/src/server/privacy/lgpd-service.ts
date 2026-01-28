@@ -4,6 +4,7 @@
  */
 
 import { prisma } from '../db/client';
+import { sendEmail, buildEmailFromTemplate } from '../utils/email';
 
 export interface CookieConsentData {
   necessary: boolean; // Sempre true
@@ -129,6 +130,8 @@ export async function processDataExport(requestId: string): Promise<void> {
     // Em produção, salvar arquivo em storage privado e gerar URL assinada
     // Por enquanto, apenas simulamos o processo
     const fileUrl = `/api/lgpd/export/${requestId}/download`;
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const downloadUrl = fileUrl.startsWith('http') ? fileUrl : `${baseUrl}${fileUrl}`;
     
     await prisma.dataExportRequest.update({
       where: { id: requestId },
@@ -138,8 +141,26 @@ export async function processDataExport(requestId: string): Promise<void> {
         completedAt: new Date(),
       },
     });
-    
-    // TODO: Enviar email notificando que exportação está pronta
+
+    if (request.user?.email) {
+      const emailContent = await buildEmailFromTemplate('lgpd.export_ready', {
+        userName: request.user.name ? ` ${request.user.name}` : '',
+        downloadUrl,
+      });
+      const sent = await sendEmail({
+        to: request.user.email,
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text,
+      });
+
+      if (!sent) {
+        console.warn('[LGPD] Failed to send data export email', {
+          requestId,
+          userId: request.userId,
+        });
+      }
+    }
     
   } catch (error) {
     console.error('[LGPD] Export error:', error);

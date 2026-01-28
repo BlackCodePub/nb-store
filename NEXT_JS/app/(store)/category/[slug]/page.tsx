@@ -1,13 +1,23 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '../../../../src/server/db/client';
+import { getServerLocale } from '../../../../src/i18n/server';
 
 // Formatar preço em BRL
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat('pt-BR', {
+function formatPrice(price: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'BRL',
   }).format(price);
+}
+
+function getTranslatedName<T extends { name: string; nameEn?: string | null }>(item: T, locale: string) {
+  return locale === 'en-US' ? (item.nameEn || item.name) : item.name;
+}
+
+function getTranslatedDescription<T extends { description?: string | null; descriptionEn?: string | null }>(item: T, locale: string) {
+  const fallback = item.description || '';
+  return locale === 'en-US' ? (item.descriptionEn || fallback) : fallback;
 }
 
 interface PageProps {
@@ -16,6 +26,7 @@ interface PageProps {
 }
 
 export default async function CategoryPage({ params, searchParams }: PageProps) {
+  const locale = await getServerLocale();
   const { slug } = await params;
   const { page } = await searchParams;
   const currentPage = Math.max(1, parseInt(page || '1', 10));
@@ -35,6 +46,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       select: {
         id: true,
         name: true,
+        nameEn: true,
         slug: true,
         price: true,
         type: true,
@@ -68,9 +80,9 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
 
       {/* Header */}
       <div className="mb-4">
-        <h1 className="h3">{category.name}</h1>
-        {category.description && (
-          <p className="text-muted">{category.description}</p>
+        <h1 className="h3">{getTranslatedName(category, locale)}</h1>
+        {getTranslatedDescription(category, locale) && (
+          <p className="text-muted">{getTranslatedDescription(category, locale)}</p>
         )}
         <small className="text-muted">
           {totalCount} {totalCount === 1 ? 'produto encontrado' : 'produtos encontrados'}
@@ -115,9 +127,9 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                       )}
                     </div>
                     <div className="card-body">
-                      <h5 className="card-title h6 mb-2 text-dark">{product.name}</h5>
+                      <h5 className="card-title h6 mb-2 text-dark">{getTranslatedName(product, locale)}</h5>
                       <div className="d-flex justify-content-between align-items-center">
-                        <span className="fw-bold text-primary">{formatPrice(price)}</span>
+                        <span className="fw-bold text-primary">{formatPrice(price, locale)}</span>
                         {product.type === 'digital' && (
                           <span className="badge bg-info text-dark">Digital</span>
                         )}

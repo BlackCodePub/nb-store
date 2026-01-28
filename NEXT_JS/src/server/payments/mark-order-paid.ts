@@ -74,7 +74,7 @@ export async function markOrderPaid(params: MarkOrderPaidParams) {
   // 3. Criar entitlements para produtos digitais
   for (const item of order.items) {
     if (item.product.type === 'digital') {
-      await createDigitalEntitlements(client, order.userId, item.productId, item.quantity);
+      await createDigitalEntitlements(client, order.userId, item.productId, item.variantId ?? undefined, item.quantity);
     }
   }
   
@@ -133,48 +133,59 @@ async function createDigitalEntitlements(
   client: Tx,
   userId: string,
   productId: string,
+  variantId: string | undefined,
   quantity: number
 ) {
-  // Buscar assets digitais do produto
-  // Nota: Precisaria de uma relação ProductDigitalAsset no schema
-  // Por enquanto, vamos criar um entitlement genérico
-  
-  // Buscar ou criar um asset para o produto
-  const assetPath = `products/${productId}/download`;
-  
-  let asset = await client.digitalAsset.findFirst({
-    where: { path: assetPath, productId },
-  });
-  
-  if (!asset) {
-    asset = await client.digitalAsset.create({
-      data: { 
-        name: `Download - ${productId}`,
-        path: assetPath,
-        productId,
-      },
-    });
-  }
-  
-  // Criar entitlement (um por quantidade, ou apenas um se preferir)
-  const existingEntitlement = await client.digitalEntitlement.findFirst({
+  const assets = await client.digitalAsset.findMany({
     where: {
-      userId,
-      assetId: asset.id,
+      OR: [
+        { productId },
+        ...(variantId ? [{ variantId }] : []),
+      ],
     },
   });
-  
-  if (!existingEntitlement) {
-    await client.digitalEntitlement.create({
-      data: {
+
+  if (assets.length === 0) {
+    // Fallback: criar asset genérico
+    const assetPath = `products/${productId}/download`;
+    const existingAsset = await client.digitalAsset.findFirst({
+      where: { path: assetPath },
+    });
+    const fallbackAsset = existingAsset
+      ? await client.digitalAsset.update({
+          where: { id: existingAsset.id },
+          data: { productId },
+        })
+      : await client.digitalAsset.create({
+          data: { name: `Download - ${productId}`, path: assetPath, productId },
+        });
+    assets.push(fallbackAsset as typeof assets[number]);
+  }
+
+  for (const asset of assets) {
+    const existingEntitlement = await client.digitalEntitlement.findFirst({
+      where: {
         userId,
         assetId: asset.id,
-        expiresAt: null, // Sem expiração por padrão
       },
     });
-    
-    console.log(`[Digital] Created entitlement for user ${userId} - product ${productId}`);
+
+    if (!existingEntitlement) {
+      const expiresAt = asset.expirationDays
+        ? new Date(Date.now() + asset.expirationDays * 24 * 60 * 60 * 1000)
+        : null;
+
+      await client.digitalEntitlement.create({
+        data: {
+          userId,
+          assetId: asset.id,
+          expiresAt,
+        },
+      });
+    }
   }
+
+  console.log(`[Digital] Entitlements created for user ${userId} - product ${productId}`);
 }
 
 // Alias para compatibilidade

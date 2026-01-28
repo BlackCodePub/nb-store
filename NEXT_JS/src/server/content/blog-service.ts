@@ -4,7 +4,7 @@
  */
 
 import { prisma } from '../db/client';
-import type { Locale } from '../../i18n/config';
+import { defaultLocale, type Locale } from '../../i18n/config';
 
 export interface PostInput {
   slug: string;
@@ -64,6 +64,7 @@ export async function getPublishedPosts(
   limit = 10
 ): Promise<{ posts: PostListItem[]; total: number }> {
   const skip = (page - 1) * limit;
+  const translationLocales = locale === defaultLocale ? [defaultLocale] : [locale, defaultLocale];
   
   const [posts, total] = await Promise.all([
     prisma.post.findMany({
@@ -73,7 +74,7 @@ export async function getPublishedPosts(
       take: limit,
       include: {
         translations: {
-          where: { locale },
+          where: { locale: { in: translationLocales } },
         },
         _count: {
           select: { comments: { where: { status: 'approved' } } },
@@ -85,7 +86,9 @@ export async function getPublishedPosts(
   
   return {
     posts: posts.map(post => {
-      const translation = post.translations[0];
+      const translation = post.translations.find(t => t.locale === locale)
+        || post.translations.find(t => t.locale === defaultLocale)
+        || post.translations[0];
       return {
         id: post.id,
         slug: post.slug,
@@ -108,11 +111,12 @@ export async function getPostBySlug(
   slug: string,
   locale: Locale
 ): Promise<PostDetail | null> {
+  const translationLocales = locale === defaultLocale ? [defaultLocale] : [locale, defaultLocale];
   const post = await prisma.post.findUnique({
     where: { slug },
     include: {
       translations: {
-        where: { locale },
+        where: { locale: { in: translationLocales } },
       },
       comments: {
         where: { status: 'approved' },
@@ -128,7 +132,9 @@ export async function getPostBySlug(
   
   if (!post) return null;
   
-  const translation = post.translations[0];
+  const translation = post.translations.find(t => t.locale === locale)
+    || post.translations.find(t => t.locale === defaultLocale)
+    || post.translations[0];
   
   return {
     id: post.id,

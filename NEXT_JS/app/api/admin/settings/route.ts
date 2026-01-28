@@ -37,6 +37,19 @@ const DEFAULT_SETTINGS = {
   termsOfService: '',
   cookieConsent: true,
   dataRetentionDays: 365,
+
+  // Tema
+  storeTheme: 'default',
+
+  // Sobre
+  aboutTitle: 'Sobre a loja',
+  aboutDescription: 'Aqui você encontra produtos digitais e físicos com entrega rápida e suporte dedicado.',
+  aboutSection1Title: 'Nossa missão',
+  aboutSection1Description: 'Oferecer uma experiência de compra simples, segura e transparente, com foco em qualidade e atendimento.',
+  aboutSection2Title: 'Contato',
+  aboutSection2Description: 'Em caso de dúvidas, fale com nosso time pelo canal de suporte.',
+  aboutSection3Title: '',
+  aboutSection3Description: '',
 };
 
 export async function GET() {

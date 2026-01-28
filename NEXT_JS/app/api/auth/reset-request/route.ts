@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 import { rateLimitByRequest } from '../../../../src/server/utils/rate-limit';
 import { prisma } from '../../../../src/server/db/client';
-import { sendEmail, generateResetPasswordEmail } from '../../../../src/server/utils/email';
+import { sendEmail, buildEmailFromTemplate } from '../../../../src/server/utils/email';
 
 export async function POST(req: Request) {
   const limit = await rateLimitByRequest(req, { prefix: 'auth:reset:', limit: 5, windowMs: 60_000 });
@@ -53,10 +53,13 @@ export async function POST(req: Request) {
     const resetUrl = `${baseUrl}/reset/confirm?token=${token}&email=${encodeURIComponent(email)}`;
 
     // Enviar e-mail
-    const { html, text } = generateResetPasswordEmail(resetUrl, user.name || undefined);
+    const { html, text, subject } = await buildEmailFromTemplate('auth.reset_password', {
+      userName: user.name ? ` ${user.name}` : '',
+      resetUrl,
+    });
     await sendEmail({
       to: email,
-      subject: 'Recuperação de senha - nb-store',
+      subject,
       html,
       text,
     });

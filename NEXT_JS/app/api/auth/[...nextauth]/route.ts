@@ -10,6 +10,9 @@ function getHandler(req: NextRequest) {
 }
 
 async function rateLimitedAuth(req: NextRequest, ctx: unknown) {
+	if (req.nextUrl.pathname.endsWith('/session')) {
+		return getHandler(req)(req, ctx as any);
+	}
 	const limit = await rateLimitByRequest(req, { prefix: 'auth:nextauth:', limit: 20, windowMs: 60_000 });
 	if (!limit.allowed) {
 		return NextResponse.json({ error: 'muitas tentativas, tente novamente em instantes' }, {

@@ -11,6 +11,7 @@ import {
   requestDataExport, 
   requestDataDeletion,
   getExportStatus,
+  processDataExport,
   type CookieConsentData 
 } from '../../../src/server/privacy/lgpd-service';
 
@@ -19,8 +20,19 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(buildAuthOptions('store'));
     
+    const { searchParams } = new URL(request.url);
+    const requestId = searchParams.get('requestId');
+
     if (!session?.user?.id) {
       return NextResponse.json({ consent: null });
+    }
+
+    if (requestId) {
+      const status = await getExportStatus(requestId, session.user.id);
+      if (!status) {
+        return NextResponse.json({ error: 'Solicitação não encontrada' }, { status: 404 });
+      }
+      return NextResponse.json({ status });
     }
     
     const consent = await getUserConsent(session.user.id);
@@ -77,6 +89,7 @@ export async function POST(request: NextRequest) {
       }
       
       const requestId = await requestDataExport(session.user.id);
+      void processDataExport(requestId);
       
       return NextResponse.json({
         success: true,

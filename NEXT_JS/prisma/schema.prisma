@@ -601,6 +601,22 @@ model NewsletterSubscription {
 }
 
 // ==========================================
+// Templates de Email
+// ==========================================
+
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  name      String
+  audience  String?
+  subject   String
+  html      String   @db.Text
+  text      String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ==========================================
 // Configurações da Loja
 // ==========================================
 

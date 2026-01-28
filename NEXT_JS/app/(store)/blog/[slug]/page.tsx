@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useLocale } from '../../../../src/i18n/I18nContext';
 
 interface Post {
   id: string;
@@ -23,6 +24,7 @@ interface Post {
 }
 
 export default function BlogPostPage() {
+  const { locale } = useLocale();
   const params = useParams();
   const slug = params.slug as string;
   const { data: session } = useSession();
@@ -40,7 +42,7 @@ export default function BlogPostPage() {
     if (slug) {
       fetchPost();
     }
-  }, [slug]);
+  }, [slug, locale]);
   
   const fetchPost = async () => {
     setLoading(true);
@@ -131,7 +133,7 @@ export default function BlogPostPage() {
           {post.publishedAt && (
             <p className="text-muted">
               <i className="bi bi-calendar me-2"></i>
-              Publicado em {new Date(post.publishedAt).toLocaleDateString('pt-BR', {
+              Publicado em {new Date(post.publishedAt).toLocaleDateString(locale, {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
@@ -182,7 +184,7 @@ export default function BlogPostPage() {
                     <div>
                       <strong>{c.user.name || 'Anônimo'}</strong>
                       <small className="text-muted ms-2">
-                        {new Date(c.createdAt).toLocaleDateString('pt-BR')}
+                        {new Date(c.createdAt).toLocaleDateString(locale)}
                       </small>
                     </div>
                   </div>

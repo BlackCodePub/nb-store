@@ -3,6 +3,24 @@
 :root {
   --nb-primary: #0d6efd;
   --nb-bg: #f8f9fa;
+  --nb-surface: #ffffff;
+  --nb-text: #212529;
+  --nb-muted: #6c757d;
+  --nb-border: #dee2e6;
+  --nb-card: #ffffff;
+  --bs-primary: var(--nb-primary);
+  --bs-body-bg: var(--nb-bg);
+  --bs-link-color: var(--nb-primary);
+}
+
+html[data-theme='dark'] {
+  --nb-primary: #6ea8fe;
+  --nb-bg: #0f1115;
+  --nb-surface: #141821;
+  --nb-text: #e9ecef;
+  --nb-muted: #9aa4b2;
+  --nb-border: #2a2f3a;
+  --nb-card: #191f2a;
   --bs-primary: var(--nb-primary);
   --bs-body-bg: var(--nb-bg);
   --bs-link-color: var(--nb-primary);
@@ -10,9 +28,86 @@
 
 body {
   background: var(--nb-bg);
-  color: #212529;
+  color: var(--nb-text);
 }
 
 a {
   color: var(--nb-primary);
+}
+
+html[data-theme='dark'] .bg-white {
+  background-color: var(--nb-surface) !important;
+}
+
+html[data-theme='dark'] .bg-light {
+  background-color: var(--nb-card) !important;
+}
+
+html[data-theme='dark'] .text-dark {
+  color: var(--nb-text) !important;
+}
+
+html[data-theme='dark'] .text-muted {
+  color: var(--nb-muted) !important;
+}
+
+html[data-theme='dark'] .border,
+html[data-theme='dark'] .border-top,
+html[data-theme='dark'] .border-bottom,
+html[data-theme='dark'] .border-start,
+html[data-theme='dark'] .border-end {
+  border-color: var(--nb-border) !important;
+}
+
+html[data-theme='dark'] .card {
+  background-color: var(--nb-card);
+  color: var(--nb-text);
+  border-color: var(--nb-border);
+}
+
+html[data-theme='dark'] .dropdown-menu {
+  background-color: var(--nb-surface);
+  color: var(--nb-text);
+  border-color: var(--nb-border);
+}
+
+html[data-theme='dark'] .dropdown-item {
+  color: var(--nb-text);
+}
+
+html[data-theme='dark'] .dropdown-item:hover,
+html[data-theme='dark'] .dropdown-item:focus {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme='dark'] .nav-link {
+  color: var(--nb-text);
+}
+
+html[data-theme='dark'] .form-control,
+html[data-theme='dark'] .form-select {
+  background-color: var(--nb-surface);
+  color: var(--nb-text);
+  border-color: var(--nb-border);
+}
+
+.home-alt-layout {
+  min-height: 100vh;
+  background: var(--nb-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.home-alt-fixed {
+  padding-top: 140px;
+}
+
+.home-alt-main {
+  flex: 1;
+}
+
+@media (max-width: 991.98px) {
+  .home-alt-fixed {
+    padding-top: 170px;
+  }
 }

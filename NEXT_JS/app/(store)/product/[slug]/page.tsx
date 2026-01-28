@@ -2,13 +2,23 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '../../../../src/server/db/client';
 import { AddToCartButton } from './AddToCartButton';
+import { getServerLocale } from '../../../../src/i18n/server';
 
 // Formatar preço em BRL
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat('pt-BR', {
+function formatPrice(price: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'BRL',
   }).format(price);
+}
+
+function getTranslatedName<T extends { name: string; nameEn?: string | null }>(item: T, locale: string) {
+  return locale === 'en-US' ? (item.nameEn || item.name) : item.name;
+}
+
+function getTranslatedDescription<T extends { description?: string | null; descriptionEn?: string | null }>(item: T, locale: string) {
+  const fallback = item.description || '';
+  return locale === 'en-US' ? (item.descriptionEn || fallback) : fallback;
 }
 
 interface PageProps {
@@ -16,6 +26,7 @@ interface PageProps {
 }
 
 export default async function ProductPage({ params }: PageProps) {
+  const locale = await getServerLocale();
   const { slug } = await params;
 
   const product = await prisma.product.findUnique({
@@ -23,8 +34,10 @@ export default async function ProductPage({ params }: PageProps) {
     select: {
       id: true,
       name: true,
+      nameEn: true,
       slug: true,
       description: true,
+      descriptionEn: true,
       price: true,
       type: true,
       active: true,
@@ -42,6 +55,9 @@ export default async function ProductPage({ params }: PageProps) {
   const defaultVariant = product.variants[0];
   const mainImage = product.images[0]?.url || null;
 
+  const productName = getTranslatedName(product, locale);
+  const productDescription = getTranslatedDescription(product, locale);
+
   return (
     <div className="container py-5">
       {/* Breadcrumb */}
@@ -56,7 +72,7 @@ export default async function ProductPage({ params }: PageProps) {
             </li>
           )}
           <li className="breadcrumb-item active" aria-current="page">
-            {product.name}
+            {productName}
           </li>
         </ol>
       </nav>
@@ -72,7 +88,7 @@ export default async function ProductPage({ params }: PageProps) {
               {mainImage ? (
                 <img
                   src={mainImage}
-                  alt={product.name}
+                  alt={productName}
                   className="img-fluid"
                   style={{ objectFit: 'contain', maxHeight: '100%' }}
                 />
@@ -97,7 +113,7 @@ export default async function ProductPage({ params }: PageProps) {
                 >
                   <img
                     src={img.url}
-                    alt={`${product.name} - ${idx + 1}`}
+                    alt={`${productName} - ${idx + 1}`}
                     className="img-fluid"
                     style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                   />
@@ -115,10 +131,10 @@ export default async function ProductPage({ params }: PageProps) {
                 href={`/category/${product.category.slug}`}
                 className="text-decoration-none text-muted small"
               >
-                {product.category.name}
+                {getTranslatedName(product.category, locale)}
               </Link>
             )}
-            <h1 className="h2 mb-2">{product.name}</h1>
+            <h1 className="h2 mb-2">{productName}</h1>
             {product.type === 'digital' && (
               <span className="badge bg-info text-dark mb-3">Produto Digital</span>
             )}
@@ -127,7 +143,7 @@ export default async function ProductPage({ params }: PageProps) {
           {/* Preço */}
           <div className="mb-4">
             <span className="h3 text-primary fw-bold">
-              {formatPrice(defaultVariant?.price ?? product.price)}
+              {formatPrice(defaultVariant?.price ?? product.price, locale)}
             </span>
             <small className="text-muted d-block mt-1">
               ou em até 12x no cartão
@@ -135,17 +151,17 @@ export default async function ProductPage({ params }: PageProps) {
           </div>
 
           {/* Descrição */}
-          {product.description && (
+          {productDescription && (
             <div className="mb-4">
               <h5 className="h6 text-muted mb-2">Descrição</h5>
-              <p className="mb-0">{product.description}</p>
+              <p className="mb-0">{productDescription}</p>
             </div>
           )}
 
           {/* Seleção de Variante e Adicionar ao Carrinho */}
           <AddToCartButton
             productId={product.id}
-            productName={product.name}
+            productName={productName}
             variants={product.variants.map((v) => ({
               id: v.id,
               name: v.name,

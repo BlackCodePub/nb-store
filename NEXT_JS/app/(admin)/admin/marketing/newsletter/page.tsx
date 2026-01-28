@@ -228,7 +228,7 @@ export default function AdminNewsletterPage() {
                   <th>E-mail</th>
                   <th>Status</th>
                   <th>Data de Cadastro</th>
-                  <th width="120">Ações</th>
+                  <th style={{ width: 120 }}>Ações</th>
                 </tr>
               </thead>
               <tbody>

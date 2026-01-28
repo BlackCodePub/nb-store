@@ -16,8 +16,7 @@ interface PostFormData {
 
 const LOCALES = [
   { code: 'pt-BR', name: 'Português (BR)' },
-  { code: 'en', name: 'English' },
-  { code: 'es', name: 'Español' },
+  { code: 'en-US', name: 'English (US)' },
 ];
 
 export default function EditPostPage() {
@@ -43,8 +42,7 @@ export default function EditPostPage() {
   // Traduções por locale
   const [translations, setTranslations] = useState<Record<string, { title: string; content: string; excerpt: string }>>({
     'pt-BR': { title: '', content: '', excerpt: '' },
-    'en': { title: '', content: '', excerpt: '' },
-    'es': { title: '', content: '', excerpt: '' },
+    'en-US': { title: '', content: '', excerpt: '' },
   });
 
   const fetchPost = useCallback(async () => {
